@@ -1,3 +1,14 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
+
+var/deatheaterWon = list("The Death Eaters have successfully raided Auror HQ!","The Aurors have been defeated by the Death Eaters!","Death Eaters have defeated the Aurors in the war of the clans!")
+var/aurorWon = list("The Death Eaters have been defeated by the Aurors!","The Aurors have successfully held back the Death Eaters!","The Aurors have emerged victorious in the war of the clans!")
+var/draw = list("Nobody did anything interesting in the clan war so it resulted in a draw!","The clan war has ended in a draw! How boring!","The clans managed to hold each other off! Clan Wars is a draw!")
+
 var/clan_wars/clanwars_event
 
 clan_wars
@@ -24,30 +35,51 @@ clan_wars
 				toggle_clanwars()
 
 		end()
-			var/deatheaterWon = list("The deatheaters clan have successfully raided Auror clan HQ!","The aurors have been defeated by the deatheaters!","Deatheaters have defeated the aurors in the war of the clans!")
-			var/aurorWon = list("The deatheaters have been defeated by the aurors!","The aurors have successfully held back the deatheaters!","The Aurors have emerged victorious in the war of the clans!")
-			var/draw = list("Nobody did anything interesting in the clan war so it resulted in a draw!","The clan war has ended in a draw! How boring!","The clans managed to hold each other off! Clan Wars is a draw!")
-
-			var/c
 			if(deatheater > aurors)
 				var/dewinner = pick(deatheaterWon)
-				Players << "<span style=\"color:'#282C1B'; font-size:'3';\"><b>[dewinner]</b></span>"
-				c = "#303A3A"
+				Players << "<font color='#282C1B' size='3'><b>[dewinner]</b></font>"
+
+				for(var/turf/Ben_Turfs/Wooden_Floor/t in world)
+					if(t.z >= 21 && t.z <= 23)
+
+						if(!findtext(t.icon_state, " Black"))
+							t.icon_state += " Black"
+
+				for(var/turf/nofirezone/t in world)
+					if(t.z >= 21 && t.z <= 23 && findtext(t.icon_state, "Wooden Floor"))
+
+						if(!findtext(t.icon_state, " Black"))
+							t.icon_state += " Black"
+
 			else if(deatheater < aurors)
 				var/aurorwinner = pick(aurorWon)
-				Players << "<span style=\"color:'#66CCFF'; font-size:'3';\"><b>[aurorwinner]<b></span>"
-				c = "#3d6277"
+				Players << "<font color='#66CCFF' size='3'><b>[aurorwinner]<b></font>"
+
+				for(var/turf/Ben_Turfs/Wooden_Floor/t in world)
+					if(t.z >= 21 && t.z <= 23)
+						var/pos = findtext(t.icon_state, " Black")
+						if(pos)
+							t.icon_state = copytext(t.icon_state, 1, pos)
+
+				for(var/turf/nofirezone/t in world)
+					if(t.z >= 21 && t.z <= 23)
+						var/pos = findtext(t.icon_state, " Black")
+						if(pos)
+							t.icon_state = copytext(t.icon_state, 1, pos)
+
 			else
 				var/wardraw = pick(draw)
-				Players << "<span style=\"color:'#E5E4E2'; font-size:'3';\"><b>[wardraw]</b></span>"
-				c = "#704F32"
-
-			for(var/turf/t in world)
-				if(t.z >= 4 && t.z <= 5)
-					if(istype(t, /turf/woodenfloor) || istype(t, /turf/nofirezone) || istype(t, /turf/sideBlock))
-						if(!findtext(t.icon_state, "wood")) continue
-						t.color = c
-
+				Players << "<font color='#E5E4E2' size='3'><b>[wardraw]</b></font>"
+				for(var/turf/Ben_Turfs/Wooden_Floor/t in world)
+					if(t.z >= 21 && t.z <= 23)
+						var/pos = findtext(t.icon_state, " Black")
+						if(pos)
+							t.icon_state = copytext(t.icon_state, 1, pos)
+				for(var/turf/nofirezone/t in world)
+					if(t.z >= 21 && t.z <= 23)
+						var/pos = findtext(t.icon_state, " Black")
+						if(pos)
+							t.icon_state = copytext(t.icon_state, 1, pos)
 		timeout()
 			var/m = 0
 			while(m < MINUTES && clanwars)
@@ -59,7 +91,6 @@ clan_wars
 			toggle_clanwars()
 
 mob/test/verb/Toggle_Clanwars()
-	set category = "Events"
 	toggle_clanwars()
 	if(clanwars)
 		usr << "Clan wars enabled."
@@ -72,8 +103,9 @@ proc/toggle_clanwars()
 		clanwars_event = new
 		spawn() clanwars_event.timeout()
 		for(var/mob/Player/M in Players)
-			M.ClanwarsInfo()
-			M.beep()
+			if(M.Auror || M.DeathEater)
+				M.ClanwarsInfo()
+				M.beep()
 
 		for(var/obj/clanpillar/C in locate(/area/AurorHQ))
 			C.enable(100)
@@ -83,67 +115,32 @@ proc/toggle_clanwars()
 		clanwars_event.end()
 		clanwars_event = null
 		for(var/mob/Player/M in Players)
-			M << infomsg("<b>Clan wars is now disabled.</b>")
+			if(M.Auror || M.DeathEater)
+				M << infomsg("<b>Clan wars is now disabled.</b>")
 		for(var/obj/clanpillar/C in locate(/area/AurorHQ))
 			C.disable()
 		for(var/obj/clanpillar/C in locate(/area/DEHQ))
 			C.disable()
 
 mob/Player/proc/ClanwarsInfo()
-	src << infomsg({"<b>Clan wars has now begun.</b><br>A special object called a "pillar" has spawned inside the deatheater and auror HQs.<br>\
-				The goal during clan wars is to protect yours, and destroy the enemy's.<br>\
+	src << infomsg({"<b>Clan wars has now begun.</b><br>A special object called a "pillar" has spawned inside the Deatheater and Auror HQs.<br>\
+				The goal during clan wars is to protect yours, and destroy the enemy's.<br><br>\
+				Your clan will receive 1 point for each [src.Auror ? "Deatheater" : "Auror"] you kill.<br>\
+				Your clan will receive 10 points for each time the enemy's pillar is destroyed.<br>\
 				Doors inside your enemy's HQ can be destroyed by firing at them with a projectile damage spell. Doors will respawn in 60 seconds.<br>\
-				Your side will receive 1 point for each player you kill.<br>\
-				Your side will receive 10 points for each time the enemy's pillar is destroyed.<br>"})
-
+				Some clan members may have access to "The Clan Store", and are able to spend points to perform actions such as doubling Door max HP, restoring Door HP to full, uncloaking enemies in your HQ, etc.<br>\
+				<b>You must be robed in order to earn points/destroy doors/destroy pillars.<br>"})
 var/clanwars = 0
 obj/brick2door
 	icon = 'hogwartsbrick.dmi'
 	icon_state = "closed"
 	density = 1
-	post_init = 1
-	var
-		door = 0
-		MHP = 150
-		tmp
-			inuse = 0
-			HP
-
+	var/door = 0
+	var/HP
+	var/MHP = 150
+	bumpable = 1
+	var/inuse = 0
 	name = "brick"
-
-	roofb
-		icon = 'roofbdoor.dmi'
-		MHP  = 20
-
-		New()
-			loc.name = "roofb"
-			..()
-
-		MapInit()
-
-			..()
-
-			var/turf/floor = loc
-			var/n = 15 - floor.autojoin("name", "roofb")
-
-			var/list
-				dirs  = list(NORTH, SOUTH, EAST, WEST)
-				edges = list()
-
-			edges["4"] = /image/roofedge/east
-			edges["8"] = /image/roofedge/west
-			edges["1"] = /image/roofedge/north
-			edges["2"] = /image/roofedge/south
-
-			for(var/d in dirs)
-				if((n & d) > 0)
-
-					var/turf/t = get_step(src, d)
-					if(!t || istype(t, /turf/blankturf)) continue
-					t.overlays += edges["[d]"]
-
-					n -= d
-
 	clandoor
 		name = "door"
 		icon = 'Door.dmi'
@@ -151,25 +148,25 @@ obj/brick2door
 		door = 1
 		MHP = 100
 		var/clan = "" //"DE" or "Auror"
-
-		MapInit()
+		New()
 			..()
 			if(istype(src.loc.loc, /area/AurorHQ))
 				clan = "Auror"
 			else if(istype(src.loc.loc, /area/DEHQ))
 				clan = "DE"
-		Bumped(mob/Player/M)
-			if(!isplayer(M)) return
-			if(!M.guild) return
-			if(clan == "Auror" && M.guild != worldData.majorPeace)
+		Bumped(mob/M)
+			if(clan == "Auror" && !M.Auror)
 				//If you're not the same clan as the door
 				return
-			if(clan == "DE" && M.guild != worldData.majorChaos)
+			if(clan == "DE" && !M.DeathEater)
 				return
 			..()
-		Take_Hit(obj/projectile/p)
+		Take_Hit(mob/M)
 			if(!clanwars)return
-			return ..()
+			if(clan == "Auror" && M.derobe)
+				return ..()
+			else if(clan == "DE" && M.aurorrobe)
+				return ..()
 
 	proc
 		Bumped(mob/M)
@@ -180,17 +177,13 @@ obj/brick2door
 				sleep(40)
 				Close()
 				inuse = 0
-		Take_Hit(obj/projectile/p)
-			if(istype(p, /obj/projectile/Bomb))
-				HP -= 10
-			else
-				HP--
+		Take_Hit(mob/M)
+			HP--
 			flick("hit",src)
 			if(HP < 1)
 				view(src) << "The door blows open."
 				Bust_Open()
 		Bust_Open()
-			set waitfor = 0
 			density = 0
 			icon_state = "brokeopen"
 			opacity = 0
@@ -210,27 +203,92 @@ obj/brick2door
 			flick("closing",src)
 			density = 1
 			opacity = initial(opacity)
-	MapInit()
+	New()
 		HP = MHP
 		var/turf/T = src.loc
 		if(T)T.flyblock=2
-
+		..()
 obj
 	Goblet_of_Fire
 		icon = 'goblet.dmi'
 		icon_state = "blue-idle"
+		var/list/names = list()
+		var/started = 0
+		var/Gpicked = 0
+		var/Rpicked = 0
+		var/Spicked = 0
+		var/Hpicked = 0
+		verb
+			Enter_Name()
+				set src in oview(1)
+				if(usr.level < 101)
+					alert("You need to be at least a 4th year (level 101) to enter the Triwizard Tournament")
+					return
+				if(started)
+					alert("The Goblet is no longer taking names.")
+					return
+				if(usr.name in names)
+					alert("You've already entered your name in the Goblet")
+				else
+					var/reply = alert("Are you sure you wish to drop your slip of parchment into the Goblet of Fire?",,"Yes","No")
+					if(reply == "Yes")
+						if(!(usr.name in names))
+							names.Add(usr.name)
+							icon_state = "blue-large"
+							spawn(40)
+							icon_state = "blue-idle"
+							hearers() << "<b>The Goblet of Fire burns ferociously as [usr]'s piece of parchment falls in.</b>"
 
+		Click()
+			if(usr.Gm)
+				if(started==0)
+					var/reply = alert("Do you wish to start the ceremony? The goblet will turn red, and wait for you to click it again.",,"Yes","No")
+					if(reply == "Yes")
+						started = 1
+						hearers() << "<h3>The Goblet of Fire changes its colour to a firey red.</h3>"
+						icon_state = "red-idle"
+					return
+				else
+					var/list/options = list()
+					if(Gpicked == 0) options.Add("Gryffindor")
+					if(Spicked == 0) options.Add("Slytherin")
+					if(Rpicked == 0) options.Add("Ravenclaw")
+					if(Hpicked == 0) options.Add("Hufflepuff")
+					var/house = input("Which House is the Goblet drawing?") as null|anything in options
+					if(!house)return
+					var/list/mob/onlineplayers = list()
+					for(var/mob/M in world) if(M.key) onlineplayers.Add(M)
+					for(var/mob/M in onlineplayers)
+						if(!(M.name in names))
+							onlineplayers.Remove(M)
+					//onlineplayers now contains only players that are online, and have entered the goblet
+					for(var/mob/M in onlineplayers)
+						if(M.House != house)
+							onlineplayers.Remove(M)
+					//onlineplayers now only contains players from the house
+					var/mob/winner = pick(onlineplayers)
+					icon_state = "red-large"
+					hearers() << "<b>The Goblet of Fire burns ferociously</b>"
+					sleep(50)
+					if(winner)
+						hearers() << "<h2>A thin sliver of charred parchment with <u>[winner.name]<u>  written on it flies out of the Goblet.</h2>"
+					else
+						hearers() << "<h3>The Goblet fizzles out</h3>"
+					sleep(10)
+					icon_state = "red-idle"
+obj/var/dragandrop=1
 obj
 	MouseDrop(over_object,src_location,over_location)
-		.=..()
-		if(!isturf(over_location))return
-
-		if(isplayer(usr) && usr:draganddrop)
+		if(usr.clanrobed())return
+		if(src.dragandrop==0)return
+		if(!isturf(over_location))return ..()
+		if(istype(src , /obj/tree)||istype(src , /obj/tree_top))return ..()
+		if(istype(src , /obj/Paintings)||istype(src , /obj/Ben_Hogwarts))return ..()
+		if(usr.draganddrop)
 			if(istype(src, /obj/items/wearable))
 				var/mob/Player/user = usr
 				if(src in user.Lwearing)
 					src:Equip(user)
-				if(!src.loc) return
 			if(density)
 				density = 0
 				src.Move(over_location)
@@ -239,8 +297,9 @@ obj
 				src.Move(over_location)
 mob
 	MouseDrop(over_object,src_location,over_location)
+		if(usr.clanrobed())return
 		if(!isturf(over_location))return ..()
-		if(isplayer(usr) && usr:draganddrop==1)
+		if(usr.draganddrop==1)
 			if(density)
 				density = 0
 				src.Move(over_location)

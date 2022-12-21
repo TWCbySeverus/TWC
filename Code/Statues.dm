@@ -1,11 +1,16 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
+
 obj/museum
 
 	density = 1
 	var/robes
 
 	icon = 'statues.dmi'
-
-	mouse_over_pointer = MOUSE_HAND_POINTER
 
 	New()
 		..
@@ -16,41 +21,10 @@ obj/museum
 			icon = 'FemaleStaff.dmi'
 		else
 			icon_state = robes
-
-		if(!pname) pname = name
-
-		namefont.QuickName(src, pname, rgb(255,255,255), "#000", top=1)
-
-	Click()
-		..()
-
-		var/ScreenText/s = new(usr, src)
-
-		s.AddText("This is [name]: \n[desc]")
-
-		if(usr:prevname) return
-
-		var/n = usr.pname ? usr.pname : usr.name
-
-		if(name == n || pname == n)
-
-			s.SetButtons("OK", "#2299d0", "Clothing", "#00ff00", null)
-
-			if(!s.Wait()) return
-
-			if(s.Result == "Clothing")
-
-				var/d = desc
-				var/tmpName = name
-				appearance = usr.appearance
-
-				underlays = list()
-				namefont.QuickName(src, pname, rgb(255,255,255), "#000", top=1)
-
-				name = tmpName
-				desc = d
-				mouse_over_pointer = MOUSE_HAND_POINTER
-
+	verb
+		Examine()
+			set src in oview(10)
+			usr<<"This is [name]: [desc]"
 
 	Murrawhip
 		desc  = "<b>Owner of TWC & Minister of Magic.<b><br>Murrawhip's contributions to TWC excel any other, he will go down forever in history as 'THAT ONE GUY WHO SHUT DOWN TWC BUT THEN CHANGED HIS MIND' and for that reason - we thank him!"
@@ -62,10 +36,10 @@ obj/museum
 
 	Ragnarok
 		desc = "<b>Original owner of TWC.</b><br>Some people liked him and most people didn't."
-		robes = "blue2"
+		robes = "blue"
 
 	Lucifer
-		desc = "<b>Creator of TWC radio. Former Transfiguration Professor.</b><br>A wonderful asset to TWC and a true friend in times of need."
+		desc = "<b>Creator of TWC radio. Former Co-Owner & Transfiguration Professor.</b><br>A wonderful asset to TWC and a true friend in times of need."
 		robes = "MaleStaff"
 
 	Linshon
@@ -74,7 +48,7 @@ obj/museum
 
 	Shirou
 		desc = "Former Headmaster of TWC & DADA Professor."
-		robes = "blue"
+		robes = "lightblue"
 
 	Kozu
 		desc = "<b>Former Headmaster of TWC.</b><br>Part cute and cuddly, part fierce and fabulous."
@@ -93,16 +67,16 @@ obj/museum
 		robes = "teal"
 
 	Justin
-		pname = "Justin (Demonic)"
+		name = "Justin (Demonic)"
 		desc = "<b>Former Headmaster, Deputy Headmaster, Professor of every class at different points. Former Slytherin Prefect and Host.</b><br>He's just always there... It's kind of weird and some what creepy but he's always here when TWC needs him!"
 		robes = "white"
 
 	Sylar
-		desc = "<b>Former Headmaster, Deputy Headmaster, Administrator, Chat Moderator. Previous GCOM, DADA, and Charms Professor.</b><br>"
-		robes = "MaleStaff"
+		desc = "<b>Headmaster of TWC. Former Deputy Headmaster, Administrator, Chat Moderator. Previous GCOM, DADA, and Charms Professor.</b><br>"
+		robes = "orange"
 
-	Owen
-		desc = "Former Headmaster, Deputy Headmaster, Administrator, and Professor."
+	Chrissy
+		desc = "Former Headmistress, Deputy Headmistress, Administrator, and Professor."
 		robes = "pink"
 
 	Firefly
@@ -111,7 +85,7 @@ obj/museum
 
 	Uchiha
 		desc = "Former Deputy Headmaster of TWC."
-		robes = "lightblue"
+		robes = "cyan"
 
 	Atomic
 		desc = "Former Deputy Headmaster of TWC."
@@ -119,7 +93,7 @@ obj/museum
 
 	Jared
 		desc = "Former Deputy Headmaster of TWC."
-		robes = "MaleStaff"
+		robes = "cyan"
 
 	Spitfire
 		desc = "Administrator & DADA Professor"
@@ -167,7 +141,7 @@ obj/museum
 
 	Charming
 		desc = "Former Charms Professor."
-		robes = "FemaleStaff"
+		robes = "MaleStaff"
 
 	Katsie
 		desc = "Former Transfiguration Professor."
@@ -253,6 +227,10 @@ obj/museum
 		desc = "Former Charms Professor."
 		robes = "MaleStaff"
 
+	Neveahlee
+		desc = "Former Transfiguration Professor & Slytherin and Gryffindor Prefect."
+		robes = "FemaleStaff"
+
 	Severus
 		desc = "Former Transfiguration Professor."
 		robes = "MaleStaff"
@@ -261,8 +239,16 @@ obj/museum
 		desc = "Former DADA Professor."
 		robes = "MaleStaff"
 
+	Deathflash
+		desc = "Former Duel Instructor."
+		robes = "MaleStaff"
+
+	Ice_Dragon
+		desc = "Former Duel Instructor."
+		robes = "MaleStaff"
+
 	Ben
-		pname = "Ben (Link)"
+		name = "Ben (Zachary Lyons/Link)"
 		desc = "GCOM Professor. Former Charms, COMC, and Transfiguration Professor. Previous Duel Instructor & Ravenclaw Prefect."
 		robes = "MaleStaff"
 
@@ -276,7 +262,7 @@ obj/museum
 
 	Avery
 		desc = "Former DADA Professor."
-		robes = "MaleStaff"
+		robes = "FemaleStaff"
 
 	Malokh
 		desc = "Former DADA Professor & Ravenclaw Prefect."
@@ -298,9 +284,13 @@ obj/museum
 		desc = "Former Charms Professor."
 		robes = "MaleStaff"
 
+	Zander
+		desc = "Former Transfiguration Professor."
+		robes = "MaleStaff"
+
 	Andi
 		desc = "Former COMC Professor."
-		robes = "FemaleStaff"
+		robes = "MaleStaff"
 
 	Theodore_Richards
 		desc = "Former DADA Professor."
@@ -314,8 +304,12 @@ obj/museum
 		desc = "Former Transfiguration and DADA Professor."
 		robes = "MaleStaff"
 
+	Fire
+		desc = "Former Duel Instructor."
+		robes = "MaleStaff"
+
 	Zach
-		pname = "Chaseio Blade"
+		name = "Zach (Chaseio Blade)"
 		desc = "GCOM Professor, Former COMC Professor, Former Off-Peak Professor."
 		robes = "MaleStaff"
 
@@ -324,34 +318,5 @@ obj/museum
 		robes = "MaleStaff"
 
 	Kole
-		desc = "Former Charms Professor."
-		robes = "MaleStaff"
-
-	Tim_Cloud
-		desc = "Forever remembered for being better than Zander."
-		robes = "MaleStaff"
-
-	Vanchi
-		desc = "Former Professor, known for teaching and promoting honourable dueling."
-		robes = "MaleStaff"
-
-	Blaze
-		desc = "A silent mountain forever in the background."
-		robes = "MaleStaff"
-
-	Numble
-		desc = "Former Professor."
-		robes = "MaleStaff"
-
-	Kyo
-		desc = "Former Professor."
-		robes = "MaleStaff"
-
-	Sara_Quilor
-		desc = "Too young to be here."
-		robes = "FemaleStaff"
-
-	Katze
-		pname = "Katze (Pie)"
-		desc = "One of the most active and beloved professors to grace TWC with their presence."
+		desc = "Charms Professor.<br><b></b>"
 		robes = "MaleStaff"

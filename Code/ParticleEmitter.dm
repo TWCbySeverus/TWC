@@ -1,18 +1,18 @@
+
 var/ParticleEmitter/particle_emitter = new
 
 ParticleEmitter
 	var
-		list/pool
+		list/pool = list()
 
 		decay = FALSE
-		const/DECAY_TIME = 1200
-		const/DECAY_SIZE = 500
+		const/DECAY_TIME = 3000
+		const/DECAY_SIZE = 1000
 
 	proc
 		get_particle(ptype)
 			var/obj/particle/p
-
-			if(!pool || !("[ptype]" in pool))
+			if(!("[ptype]" in pool))
 				p = new ptype()
 			else
 				p = pool["[ptype]"][1]
@@ -27,46 +27,38 @@ ParticleEmitter
 		pool(obj/particle/p)
 			p.loc = null
 
-			if(p.client)
-				p.client.screen -= p
-				p.client = null
-
-			if(!pool) pool = list()
-
 			if("[p.type]" in pool)
 				pool["[p.type]"] += p
 
-				decay()
+				if(length(pool["[type]"]) > DECAY_SIZE)
+					decay()
+
+
 			else
 				pool["[p.type]"] = list(p)
 
 		decay()
-			set waitfor = 0
 			if(decay) return
 			decay = TRUE
-
-			sleep(DECAY_TIME)
-
-			var/size = 0
-			for(var/t in pool)
-				size += length(pool[t])
-
-			if(size > DECAY_SIZE)
-				pool = null
-
-			decay = FALSE
+			spawn(DECAY_TIME)
+				for(var/t in pool)
+					for(var/p in t)
+						t -= p
+					pool -= t
+				decay = FALSE
 
 
 
 
 
 /*mob/verb/Test_Particles()
-	emit(loc    = loc,
-		 ptype  = /obj/particle/star,
-		 amount = 5,
-		 angle  = new /Random(0, 360),
-		 speed  = 5,
-		 life   = new /Random(5,10))*/
+	var/n = dir2angle(dir)
+	emit(loc    = src,
+		 ptype  = /obj/particle/magic,
+	     amount = 50,
+	     angle  = new /Random(1, 359),
+	     speed  = 2,
+	     life   = new /Random(15,25))*/
 
 proc/dir2angle(dir)
 	if(dir == EAST)      return 0
@@ -79,113 +71,52 @@ proc/dir2angle(dir)
 	if(dir == NORTHEAST) return 315
 	return 0
 
-proc
-	atan2(x,y)
-		return (x||y)&&(y>=0 ? arccos(x/sqrt(x*x+y*y)) : 360-arccos(x/sqrt(x*x+y*y)))
-
-proc
-	get_angle(atom/a, atom/b)
-		return atan2(b.y - a.y, b.x - a.x)
-
-proc/emit(var/atom/loc, ptype, amount=10, Random/angle, speed, Random/life, color = null)
+proc/emit(var/atom/loc, ptype, amount=10, Random/angle, speed, Random/life)
 	if(isobj(loc) || ismob(loc)) loc = loc.loc
 	for(var/i = 1 to amount)
 		var/obj/particle/p = particle_emitter.get_particle(ptype)
-		p.config(angle.get(), speed, life.get(), color)
-		if(istype(loc, /client))
-			p.client = loc
-			p.client.screen += p
-		else
-			p.loc = loc
+		p.config(angle.get(), speed, life.get())
+		p.loc = loc
 		p.update()
 
 obj/particle
-	icon       = 'dot.dmi'
-	icon_state = "default"
-
-	canSave = FALSE
-
-	screen_loc = "CENTER,CENTER"
-
-	var/client/client
 	var/life
-	var/afterlife = 0
 	var/velocity/v = new
-	var/loop = 2
-	var/size = 1
+	var/loop = 5
 	var/Random/time = new /Random(5, 10)
 	mouse_opacity = 0
 
-	layer = 11
+
+	layer = 5
 
 	proc
-		config(angle, speed, life, color = null)
+		config(angle, speed, life)
 			src.life = life
 
 			v.x =  speed * cos(angle)
 			v.y = -speed * sin(angle)
 
-			if(color)
-				src.color = color
-			else
-				src.color = initial(src.color)
-
-		impact()
-
-
 		update()
-			set waitfor = 0
-
 			var/t = time.get()
 			var/l = loop
-
-			var/alphaDest = alpha
-			alpha = 255
-
-			var/matrix/m = matrix() * size
-			m.Translate(v.x * (life), v.y * (life))
+			spawn(t * l) die()
 
 			animate(src,
-					transform = m,
-					alpha = alphaDest,
+					pixel_x = v.x * (life),
+					pixel_y = v.y * (life),
 				    time = t,
 				    loop = l)
-			if(loop != 1)
-				animate(transform = null,
-					alpha = 255,
-				    time = 0)
-
-			sleep(t * l + 1)
-			impact()
-			if(afterlife)
-				sleep(afterlife - 6)
-				animate(src, alpha = 0, time = 5)
-				sleep(6)
-
-			particle_emitter.pool(src)
-			alpha = alphaDest
 
 		reset()
 			pixel_x = 0
 			pixel_y = 0
-			transform = null
 
-	star
-		icon_state = "star"
-		color      = "#ff6"
-		size       = 1
-
-		config()
-			..()
-
-			transform = matrix() * 0.5
+		die()
+			particle_emitter.pool(src)
 
 	balloon
 		icon       = 'balloon.dmi'
 		icon_state = "white"
-		blend_mode = 0
-
-		loop = 15
 
 		config()
 			..()
@@ -193,51 +124,39 @@ obj/particle
 			color = rgb(rand(0,255), rand(0,255), rand(0,255))
 
 	fluid
-		alpha     = 130
-		loop      = 1
-		afterlife = 100
-		size      = 2
-
+		icon = 'dot.dmi'
 		config()
 			..()
+			transform = matrix()/2
 
 		reset()
 			..()
-			alpha = 150
+			alpha = 255
+			transform = matrix()/2
 			layer = 5
 
-		impact()
-			layer = 3
+		update()
+			var/t = 5
+			var/l = 1
+			spawn(t * l)
+				layer = 3
+				sleep(50)
+				die()
 
+			animate(src,
+					transform = matrix()*2,
+					pixel_x = v.x * (life),
+					pixel_y = v.y * (life),
+					alpha = 150,
+				    time = t,
+				    loop = l)
 		snow
 
 		blood
-			afterlife  = 200
-			color      = "#e00000"
-
-			impact()
-				..()
-				color      = "#08ffff"
-				blend_mode = BLEND_SUBTRACT
-
-			reset()
-				..()
-				color      = "#e00000"
-				blend_mode = 0
-
-	smoke
-		alpha = 50
-		size  = 3
-		loop  = 1
-		color = "#bbb"
-
-		proj
-		green
-			size  = 4
-			color = "#00f000"
-
+			color = "red"
 
 	magic
+		icon = 'dot.dmi'
 		loop = 2
 
 		config()
@@ -245,10 +164,12 @@ obj/particle
 			color = rgb(rand(20,240), rand(20,240), rand(20,240))
 
 	green
+		icon = 'dot.dmi'
 		loop = 2
 		color = "green"
 
 	red
+		icon = 'dot.dmi'
 		loop = 2
 		color = "red"
 
@@ -278,37 +199,3 @@ var/const/PI = 3.14159265359
 velocity
 	var/x
 	var/y
-
-proc/fadeText(turf/loc, text, offsetX = 0, offsetY = 0)
-	if(istype(loc, /atom/movable))
-		loc = loc.loc
-	new /obj/fadeText (loc, text, offsetX, offsetY)
-
-obj
-	fadeText
-		maptext_width  = 128
-		maptext_height = 16
-		mouse_opacity  = 0
-		layer          = EFFECTS_LAYER
-
-		New(i_Loc, i_Text, i_OffsetX, i_OffsetY)
-			..()
-
-			maptext = i_Text
-			pixel_x = i_OffsetX
-			pixel_y = i_OffsetY
-
-			var/size   = abs(pixel_x * 2)
-			var/offset = 16
-			if(maptext_width < size)
-				maptext_width = size
-				offset = round(size / 8)
-
-			var/ox = rand(-offset,offset)
-			animate(src, pixel_x = pixel_x,        pixel_y = pixel_y,      alpha = 254, time = 0)
-			animate(pixel_x = pixel_x + ox * 0.25, pixel_y = pixel_y + 16, alpha = 253, time = 3)
-			animate(pixel_x = pixel_x + ox * 0.5,  pixel_y = pixel_y + 32, alpha = 196, time = 3)
-			animate(pixel_x = pixel_x + ox,        pixel_y = pixel_y + 48, alpha = 128, time = 3)
-			animate(pixel_x = pixel_x + ox * 2,    pixel_y = pixel_y + 64, alpha = 0,   time = 3)
-			spawn(13)
-				loc = null

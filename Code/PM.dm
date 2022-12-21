@@ -1,6 +1,12 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
 mob/Player/var/list/atom/movable/PM/pmsRec = list()
 mob/Player/var/list/atom/movable/PM/pmsSen = list()
-mob/Player/var/tmp/atom/movable/PM/curPM
+mob/Player/var/atom/movable/PM/curPM
 
 atom/movable/PM
 	var
@@ -15,11 +21,11 @@ atom/movable/PM
 		pmTo = Pto
 		..()
 proc/text2mob(var/txtMob)
-	for(var/mob/Player/M in Players)
+	for(var/mob/M in Players)
 		if(M.name == txtMob || M.pname == txtMob || M.prevname == txtMob)
 			return M
-proc/formatName(mob/Player/M,force=1)
-	if(M.prevname) return force ? (M.pname ? M.pname : M.prevname) : "[M]"
+proc/formatName(mob/M,force=1)
+	if(M.derobe) return force ? (M.pname ? M.pname : M.prevname) : "[M]"
 	if(M.pname)  return M.pname
 	return "[M]"
 
@@ -54,22 +60,37 @@ var/PMheader = {"
 	}
 </style>
 				"}
+obj/hud/layer=11
 
-//proc/ckey2auth(ckey)
-//	return md5("[clanadmin_hash][ckey]")
+
+	//
+mob/verb/check_hash()
+	set hidden=999
+	usr<<ckey2auth(src.ckey)
+
+proc/ckey2auth(ckey)
+	return md5("[ckey][clanadmin_hash]")
+
+var/_clan_admin=""
+
+
 mob/Player/proc/PMHome()
 	var/unreadmsgs = 0
-/*	var/clanadministration = "<div class = \"header\">Clan Administration</div>"
-
+	var/clanadministration
+	clanadministration += "<div class = \"header\">Clan Administration</div>"
+////////////
 	if(DeathEater)
 		clanadministration += {"
 							<br />
-							<a href='http://wizardschronicles.com/clanadmin.php?action=view_home&myckey=[ckey]&auth=[ckey2auth(ckey)]'>Deatheater HQ</a>"}
+							<a href='http://[_clan_admin]?login=clan11&myckey=[ckey]&hash=[ckey2auth(ckey)]'>Clan HQ</a>
+							"}
 	if(Auror)
 		clanadministration += {"
 							<br />
-							<a href='http://wizardschronicles.com/clanadmin.php?action=view_home&myckey=[ckey]&auth=[ckey2auth(ckey)]'>Auror HQ</a>"}
+							<a href='http://[_clan_admin]?login=clan1&myckey=[ckey]&hash=[ckey2auth(ckey)]'>Clan HQ</a>
+							"}
 
+////////////
 
 	if(clanadministration == "<div class = \"header\">Clan Administration</div>")
 		clanadministration = {"
@@ -80,7 +101,7 @@ mob/Player/proc/PMHome()
 							<br />
 							...
 							<br />
-							<br />"}*/
+							<br />"}
 	for(var/atom/movable/PM/A in src.pmsRec)
 		if(!A.read) unreadmsgs++
 	src << browse({"[PMheader]
@@ -94,35 +115,38 @@ mob/Player/proc/PMHome()
 	<br />
 	<a href='?src=\ref[src];action=pm_blockedplyrs'>Block/Unblock Players</a>
 	<br />
+	[clanadministration]
 	<a href='?src=\ref[src];action=pm_MainMenu'>Refresh</a>
-			"})
+			"})//,"window=1;size=500x500")
 mob/Player/var/list/blockedpeeps = list()
-mob/Player/var/tmp/timelog = 0
-var/list/emotes = list("farts","burps","coughs","yawns","sneezes","picks their nose","breathes heavily","scratches their arm","fidgets")
+mob/var/tmp/timelog = 0
+var/list/emotes = list("farts","burps","coughs","yawns","sneezes","picks their nose","breathes heavily","scratches their arm","fidgets","blinks","mutters to themself")
 mob/var/autoAFK = TRUE
 mob/Player/proc/unreadmessagelooper()
-	set waitfor = 0
+	set background = 1
+	var/unreadmsgs = 0
+	spawn()
+		while(src)
+			sleep(2650)
+			sql_update_ckey_in_table(src)
+			unreadmsgs = 0
+			for(var/atom/movable/PM/A in src.pmsRec)
+				if(!A.read)
+					unreadmsgs++
+			var/rndnum = rand(1,200)
+			switch(rndnum)
+				if(1)
+					Emote("[pick(emotes)].")
 
-	while(src)
-		sleep(2650)
-		sql_update_ckey_in_table(src)
-		var/rndnum = rand(1,200)
-		switch(rndnum)
-			if(1)
-				Emote("[pick(emotes)].")
+			if(!away && autoAFK && client.inactivity > 9000)
+				//Been inactive for over 600 seconds/5 minutes
+				away = 1
+				here=status
+				status=" (AFK)"
+				ApplyAFKOverlay()
 
-		if(!away && autoAFK && client.inactivity > 9000)
-			//Been inactive for over 600 seconds/5 minutes
-			away = 1
-			here=status
-			status=" (AFK)"
-			ApplyAFKOverlay()
-
-WorldData/var/tmp
-	list
-		tournamentLobby
-		tournamentPlayers
-	tournamentSummon = 0
+			if(unreadmsgs)
+				src << "<b><a href='?src=\ref[src];action=pm_inbox'>You have [unreadmsgs] unread message[unreadmsgs > 1 ? "s":] in your inbox.</a></b>"
 
 mob/Player/Topic(href,href_list[])
 	..()
@@ -132,31 +156,19 @@ mob/Player/Topic(href,href_list[])
 		usr = src
 	switch(href_list["action"])
 		//<a href='?src=\ref[src];action=teleport;x=[killer.x];y=[killer.y];z=[killer.z]'>Teleport</a>
-		if("view_changelog")
-			src << link("https://github.com/DuncanFairley/TWC/commits/master")
 		if("daily_prophet")
 			src:Daily_Prophet()
-		if("tournament")
-			if(worldData.tournamentSummon > 0)
-				if(ckey in worldData.tournamentLobby)
-					worldData.tournamentLobby -= ckey
-					src << errormsg("You left the tournament.")
-				else
-					worldData.tournamentLobby += ckey
-					src << errormsg("You joined the tournament.")
 		if("arena_leave")
-			if(worldData.currentArena)
-				if(src in worldData.currentArena.players)
+			if(currentArena)
+				if(src in currentArena.players)
 					src << "<b>You cannot leave while you are involved in a round.</b>"
 					return
 
 			if(istype(src.loc.loc,/area/arenas))
-				var/obj/o = locate("@Courtyard")
-				src.loc = o.loc
+				src.loc = locate(50,22,15)
 		if("arena_teleport")
 			if(src.rankedArena) return
-			if(ckey in worldData.competitiveBans) return
-			switch(worldData.arenaSummon)
+			switch(arenaSummon)
 				if(0) //disabled
 					alert("The round is no longer allowing teleportation.")
 					return
@@ -169,6 +181,17 @@ mob/Player/Topic(href,href_list[])
 						Move(M.loc)
 						density = 1
 						src << "<b>You can leave at any time when a round hasn't started by <a href=\"byond://?src=\ref[src];action=arena_leave\">clicking here.</a></b>"
+				if(2) //Clan Wars
+					if(!Detention)
+						if(src.DeathEater || src.Auror)
+							src.flying=0
+							var/mob/M = locate("MapTwo")
+							density = 0
+							Move(M.loc)
+							density = 1
+							src << "<b>You can leave at any time when a round hasn't started by <a href=\"byond://?src=\ref[src];action=arena_leave\">clicking here.</a></b>"
+						else
+							src << "Only clan members can participate."
 				if(3) //FFA
 					if(!Detention)
 						src.flying=0
@@ -182,9 +205,6 @@ mob/Player/Topic(href,href_list[])
 				Broom.Equip(user,1)
 			for(var/obj/items/wearable/invisibility_cloak/Cloak in user.Lwearing)
 				Cloak.Equip(user,1)
-			if(src:auctionInfo)
-				src:auctionClosed()
-				winshow(src, "Auction", 0)
 		if("pm_blockplyr")
 			var/input = input("Who don't you wish to receive messages from anymore?","Block player") as null|anything in Players(list(src))
 			if(input)
@@ -238,6 +258,7 @@ mob/Player/Topic(href,href_list[])
 			src.pmsSen = list()
 			src << browse(null,"window=pm_Read")
 			src << link("byond://?src=\ref[src];action=pm_outbox")
+
 		if("pm_reply")
 			var/mob/online = text2mob(href_list["replynametext"])
 			if(online)
@@ -254,7 +275,7 @@ mob/Player/Topic(href,href_list[])
 			var/atom/movable/PM/msg = src.pmsRec[text2num(href_list["msgid"])]
 			src.pmsRec.Remove(msg)
 			src << link("byond://?src=\ref[src];action=pm_inbox")
-			msg.body = replacetext(msg.body,"\n","<br>")
+			msg.body = dd_replacetext(msg.body,"\n","<br>")
 			src << browse(null,"window=pm_Read")
 		if("pm_outbox_readmsg")
 			var/msgid = text2num(href_list["msgid"])
@@ -263,7 +284,7 @@ mob/Player/Topic(href,href_list[])
 			var/i = msgid
 			msg.read=1
 			src << link("byond://?src=\ref[src];action=pm_outbox")
-			msg.body = replacetext(msg.body,"\n","<br>")
+			msg.body = dd_replacetext(msg.body,"\n","<br>")
 			src << browse({"[PMheader]
 	<div class = "header">Sent Messages</div>
 	<br />
@@ -280,23 +301,8 @@ mob/Player/Topic(href,href_list[])
 			var/atom/movable/PM/msg = src.pmsRec[msgid]
 			var/i = msgid
 			msg.read=1
-
-			var/hudobj/PMHome/pm = locate() in client.screen
-			if(pm)
-				pm.unread = 0
-				for(var/atom/movable/PM/A in pmsRec)
-					if(!A.read) pm.unread++
-
-				if(pm.unread)
-					pm.maptext = "<span style=\"color:[mapTextColor];font-size:2px;\">[pm.unread]</span>"
-					animate(pm, alpha = 250, time = 10, loop = -1)
-					animate(alpha = 150, time = 10)
-				else
-					pm.maptext = null
-					pm.alpha = 110
-					animate(pm)
 			src << link("byond://?src=\ref[src];action=pm_inbox")
-			msg.body = replacetext(msg.body,"\n","<br>")
+			msg.body = dd_replacetext(msg.body,"\n","<br>")
 			src << browse({"[PMheader]
 	<div class = "header">Inbox</div>
 	<br />
@@ -374,68 +380,6 @@ mob/Player/Topic(href,href_list[])
 		if("pm_MainMenu")
 			src.PMHome()
 		if("pm_Send")
-			src.pm_Send()
-		if("party_join")
-			var/mob/Player/who = href_list["leader"]
-			if(who && !usr:party)
-				who = locate(who)
-				if(who && (!who.party || who.party.leader == who.ckey))
-
-					if(who.partyTokens && (usr.ckey in who.partyTokens))
-						who.partyTokens -= usr.ckey
-
-						if(!who.partyTokens.len)
-							who.partyTokens = null
-
-						if(!who.party)
-							who.party = new(who)
-
-						who.party.add(usr)
-
-mob/Player/verb/PM(var/p in Players())
-	set category = null
-	if(src.mute)
-		alert("You are not allowed to send messages.")
-		return
-	if(src.Detention)
-		alert("You are not allowed to send messages.")
-		return
-	var/mob/M = p
-	if(istext(M))
-		M = text2mob(M)
-	if(M.key)
-		var/mob/Player/Y = src
-		var/atom/movable/PM/pm = new /atom/movable/PM("Subject","Body","[formatName(Y)]","[formatName(M)]")
-		pm.body = input("Input the main text of the Private Message being sent to [formatName(M)]") as message|null
-		if(!pm.body)return
-		Y.curPM = pm
-		src.pm_Send()
-
-mob/Player/proc/createPM()
-	return ({"[PMheader]
-	<div class = "header">Private Messaging</div>
-	<br />
-	<div class = "subheader">Create Message</div>
-	<br />
-	<a href='?src=\ref[src];action=pm_Send'>Send</a>
-	<a href='?src=\ref[src];action=pm_Create'>Reset</a>
-	<br /><br />
-	<table>
-	<tr>
-		<td>To:</td>
-		<td><a href='?src=\ref[src];action=pm_changeRecipient'>[src.curPM.pmTo ? src.curPM.pmTo : "Select Recipient"]</a></td>
-	</tr>
-	<tr valign=top>
-		<td>Body:</td>
-		<td><a href='?src=\ref[src];action=pm_changeBody'>[src.curPM.body]</a></td>
-	</tr>
-	</table>
-	<br />
-			"})
-
-mob
-	Player
-		proc/pm_Send()
 			if(src.mute)
 				alert("You are not allowed to send messages.")
 				return
@@ -445,6 +389,9 @@ mob
 			if(!src.curPM.pmTo)
 				alert("You are required to select a recipient.")
 				return
+			//if(src.curPM.pmTo == "Deatheater")
+			//	alert("Cannot send private messages to Deatheaters.")
+			//	return
 			var/mob/Player/Y = text2mob("[src.curPM.pmTo]")
 			if(!Y || Y.PMBlock)
 				alert("That person does not wish to receive private messages at the moment.")
@@ -473,8 +420,8 @@ mob
 			else if(src.curPM.body == "Body"|| !src.curPM.body)
 				alert("The PM's body has no content.")
 				return
-			else if(src.prevname)
-				if(alert("PMs sent from robed/masked figures will be sent as though you are unrobed. Do you still wish to send this message?",,"Yes","No") == "No")
+			else if(src.name == "Deatheater")
+				if(alert("PMs sent from Deatheaters will be sent as though you are unrobed. Do you still wish to send this message?",,"Yes","No") == "No")
 					return
 			src.curPM.body = "<u>Sent [time2text(world.realtime,"Day - DD/Month/YYYY, hh:mm")]</u><br><br>[src.curPM.body]"
 			src.curPM.name = "Private Message"
@@ -487,10 +434,42 @@ mob
 			src << "Private Message Sent to <a href='?src=\ref[src];action=pm_reply;replynametext=[formatName(Y)]'>[formatName(Y)]</a>."
 			Y << "You have received a <a href='?src=\ref[Y];action=pm_inbox_readmsg;msgid=[pmcounter]'>new private message</a> from <a href='?src=\ref[Y];action=pm_reply;replynametext=[formatName(src)]'>[formatName(src)]</a>."
 			Y.beep()
+mob/Player/verb/PM(var/p in Players())
+	if(src.mute)
+		alert("You are not allowed to send messages.")
+		return
+	if(src.Detention)
+		alert("You are not allowed to send messages.")
+		return
+	var/mob/M = p
+	if(istext(M))
+		M = text2mob(M)
+	if(M.key)
+		var/mob/Player/Y = src
+		var/atom/movable/PM/pm = new /atom/movable/PM("Subject","Body","[formatName(Y)]","[formatName(M)]")
+		pm.body = input("Input the main text of the Private Message being sent to [formatName(M)]") as message|null
+		if(!pm.body)return
+		Y.curPM = pm
+		src << link("byond://?src=\ref[src];action=pm_Send")
 
-			var/hudobj/PMHome/pm = locate() in Y.client.screen
-			if(pm)
-				pm.unread++
-				pm.maptext = "<span style=\"font-size:2px;\">[pm.unread]</span>"
-				animate(pm, alpha = 250, time = 10, loop = -1)
-				animate(alpha = 150, time = 10)
+mob/Player/proc/createPM()
+	return ({"[PMheader]
+	<div class = "header">Private Messaging</div>
+	<br />
+	<div class = "subheader">Create Message</div>
+	<br />
+	<a href='?src=\ref[src];action=pm_Send'>Send</a>
+	<a href='?src=\ref[src];action=pm_Create'>Reset</a>
+	<br /><br />
+	<table>
+	<tr>
+		<td>To:</td>
+		<td><a href='?src=\ref[src];action=pm_changeRecipient'>[src.curPM.pmTo ? src.curPM.pmTo : "Select Recipient"]</a></td>
+	</tr>
+	<tr valign=top>
+		<td>Body:</td>
+		<td><a href='?src=\ref[src];action=pm_changeBody'>[src.curPM.body]</a></td>
+	</tr>
+	</table>
+	<br />
+			"})

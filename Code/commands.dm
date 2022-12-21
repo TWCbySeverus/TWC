@@ -1,21 +1,59 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
+turf
+	bathroomstall
+		icon = 'Stall.dmi'
+		name = "Stall"
+		density = 1
+		opacity = 1
+		s1
+			icon_state = "1"
+		s2
+			icon_state = "2"
+		s3
+			icon_state = "3"
+		s4
+			icon_state = "4"
+		s5
+			icon_state = "5"
+		sink
+			icon = 'sink.dmi'
+			density = 1
+obj
+	toilet
+		name = "toilet"
+		icon = 'toilet.dmi'
+		density = 0
+
+		proc
+			poop(mob/Player/P)
+				if(P.Pooping)
+					P.Pooping = 0
+					P << infomsg("You feel a lot better.")
+
+		New()
+			..()
+			loc.density = 0
+/area/Diagon_Alley
+mob
+	var
+		WNDone
 obj
 	var
 		rubbleable
 		rubble
-		pname
-		piconstate
 
 mob
 	var
+		rubble
 		ClassNotifications = 1 // If set to 1, your window will flash when a class is announced
 		EventNotifications = 1
 		MonsterMessages = 1
-
-	Player
-		var
-			tmp/openedSettings = 0
-			BeepType = 1
-
+		PartyMonsterMessages = 1
 mob
 	verb
 		resetSettings()
@@ -30,7 +68,12 @@ mob
 				winset += "butTradetoggle.is-checked=true;"
 			else
 				winset += "butTradetoggle.is-checked=false;"
-
+			if(betamapmode)
+				winset += "butMapmodetoggle.is-checked=true;"
+				EnableBetaMapMode()
+			else
+				winset += "butMapmodetoggle.is-checked=false;"
+				DisableBetaMapMode()
 			if(MonsterMessages)
 				winset += "butMonsterMessagestoggle.is-checked=false;"
 			else
@@ -57,96 +100,102 @@ mob
 				winset += "butQuestTrackertoggle.is-checked=true;"
 			else
 				winset += "butQuestTrackertoggle.is-checked=false;"
+			if(PartyMonsterMessages==0)
+				winset += "butPartyMonstertoggle.is-checked=true;"
+			else
+				winset += "butPartyMonstertoggle.is-checked=false;"
+			winset += "mnu_Settings.command=.ShowSettings;"
+			winset += "mnu_Settings.is-disabled=false;"
+			//winset += "broLogin.is-visible=false;"
 			winset += "map.focus=true;"
-
-			winset += "winSettings.buttonTextColor.background-color=\"[p.mapTextColor]\";"
-
-			winset += "winSettings.butHideHud.is-checked=false;"
-
-			winset += "winSettings.butHideHud.is-checked=false;"
-
-			switch(p.BeepType)
-				if(1)
-					winset += "winSettings.buttonBeep.is-checked=true;"
-				if(2)
-					winset += "winSettings.buttonGuitar.is-checked=true;"
-				if(3)
-					winset += "winSettings.buttonGlass.is-checked=true;"
-
-
 			winset(src,null,winset)
-
 		ShowSettings()
 			set name = ".ShowSettings"
-			var/mob/Player/p = src
-			if(!p.openedSettings)
-				p.openedSettings = 1
-				resetSettings()
-			winshowCenter(src, "winSettings")
-		Soundtoggle(var/n as num)
+			winset(src,"winSettings","is-visible=true")
+		Soundtoggle()
 			set name = ".Soundtoggle"
-			src:playSounds = n
-
-		ChangeBeep(var/n as num)
-			set name = ".ChangeBeep"
-			usr:BeepType = n
-
-			var/sound/S
-			switch(usr:BeepType)
-				if(1)
-					S = sound('Alert.ogg')
-				if(2)
-					S = sound('Alert.mp3')
-				if(3)
-					S = sound('TWC_Alert_2.ogg')
-			src << S
-
-		MonsterMessagestoggle(var/n as num)
+			if(winget(src,"butSoundtoggle","is-checked") == "true")
+				src:playSounds = 0
+			else
+				src:playSounds = 1
+		MonsterMessagestoggle()
 			set name = ".MonsterMessagestoggle"
-			MonsterMessages = n
-
-		QuestTrackertoggle(var/n as num)
+			if(winget(src,"butMonsterMessagestoggle","is-checked") == "true")
+				MonsterMessages = 0
+			else
+				MonsterMessages = 1
+		PartyMonstertoggle()
+			set name = ".PartyMonstertoggle"
+			if(winget(src,"butPartyMonstertoggle","is-checked") == "true")
+				PartyMonsterMessages = 0
+			else
+				PartyMonsterMessages = 1
+		QuestTrackertoggle()
 			set name = ".QuestTrackertoggle"
 			var/mob/Player/p = src
-			p.HideQuestTracker = n
+			if(winget(src,"butQuestTrackertoggle","is-checked") == "true")
+				p.HideQuestTracker = TRUE
+			else
+				p.HideQuestTracker = FALSE
 			p.Interface.Update()
-
-		ClassNotificationstoggle(var/n as num)
+		ClassNotificationstoggle()
 			set name = ".ClassNotificationstoggle"
-			ClassNotifications = n
-
-		EventNotificationstoggle(var/n as num)
+			if(winget(src,"butClassNotificationstoggle","is-checked") == "true")
+				ClassNotifications = 0
+			else
+				ClassNotifications = 1
+		EventNotificationstoggle()
 			set name = ".EventNotificationstoggle"
-			EventNotifications = n
-
-		Housechattoggle(var/n as num)
+			if(winget(src,"butEventNotificationstoggle","is-checked") == "true")
+				EventNotifications = 0
+			else
+				EventNotifications = 1
+		Housechattoggle()
 			set name = ".Housechattoggle"
-			listenhousechat = n
-
-		OOCtoggle(var/n as num)
+			if(winget(src,"butHousechattoggle","is-checked") == "true")
+				listenhousechat = 0
+			else
+				listenhousechat = 1
+		OOCtoggle()
 			set name = ".OOCtoggle"
-			listenooc = n
-
-		PMtoggle(var/n as num)
+			if(winget(src,"butOOCtoggle","is-checked") == "true")
+				listenooc = 0
+			else
+				listenooc = 1
+		PMtoggle()
 			set name = ".PMtoggle"
-			src.PMBlock=n
-
-		Tradetoggle(var/n as num)
+			if(winget(src,"butPMtoggle","is-checked") == "true")
+				src.PMBlock=1
+			else
+				src.PMBlock=0
+		Tradetoggle()
 			set name = ".Tradetoggle"
-			src:TradeBlock=n
+			if(winget(src,"butTradetoggle","is-checked") == "true")
+				src:TradeBlock=1
+			else
+				src:TradeBlock=0
 
-		AFKtoggle(var/n as num)
+		AFKtoggle()
 			set name = ".AFKtoggle"
-			src:autoAFK=n
+			if(winget(src,"butAFKtoggle","is-checked") == "true")
+				src:autoAFK=0
+			else
+				src:autoAFK=1
 
-
+		Mapmodetoggle()
+			set name = ".Mapmodetoggle"
+			if(winget(src,"butMapmodetoggle","is-checked") == "false")
+				DisableBetaMapMode()
+			else
+				EnableBetaMapMode()
 mob/Player/var/HideQuestTracker = FALSE
 mob/var/pname
+obj/var/pname
+obj/var/piconstate
 
 mob/var/PMBlock=0
 mob/test/verb/Transfer_Savefile()
-	set category="Debug"
-	if(alert("Note: The new key's savefile will be overwritten. If either the new key or the old key are online, they will be forcibly logged out. The old key's savefile will be stored so that Murrawhip can retrieve it if something goes wrong, but not loaded by the player. Their vault will not be transferred.",,"Yes","Cancel") == "Yes")
+	if(alert("Note: The new key's savefile will be overwritten. If either the new key or the old key are online, they will be forcibly logged out.",,"Yes","Cancel") == "Yes")
 		var/oldkey = input("Which key(Important! key! not ckey!) are you transferring the savefile FROM? (Usually a guest key)") as null|text
 		if(!oldkey)return
 		var/old_first_initial = lowertext(copytext(oldkey, 1, 2))
@@ -187,22 +236,6 @@ mob/test/verb/Transfer_Savefile()
 			fcopy("players/[old_first_initial]/[ckey(oldkey)].sav","players/transferbackups/[old_first_initial]/[ckey(oldkey)].sav")
 			del old_mob
 			fdel("players/[old_first_initial]/[ckey(oldkey)].sav")
-
-			if(fexists("[swapmaps_directory]/map_[ckey(oldkey)].sav"))
-
-				SwapMaps_Unload(ckey(oldkey))
-
-				if(fexists("[swapmaps_directory]/map_[ckey(newkey)].sav"))
-					fdel("[swapmaps_directory]/map_[ckey(newkey)].sav")
-
-				fcopy("[swapmaps_directory]/map_[ckey(oldkey)].sav", "[swapmaps_directory]/map_[ckey(newkey)].sav")
-
-				fdel("[swapmaps_directory]/map_[ckey(oldkey)].sav")
-
-				var/savefile/newV = new("[swapmaps_directory]/map_[ckey(newkey)].sav")
-				newV.cd = "//.0"
-				newV["id"] << ckey(newkey)
-
 		else
 			alert("Couldn't find name/mob")
 mob/GM/verb/HGM_Message(msg as message)
@@ -210,3 +243,10 @@ mob/GM/verb/HGM_Message(msg as message)
 			set hidden = 1
 			if(!usr.Gm) return
 			Players<<"[msg]"
+			Log_admin("[usr] :: [msg]")
+
+var/Menu="<body bgcolor=black><p align=center><font size=3><font color=green><><><><><><><><><><><><><><p align=center><font size=2><font color=aqua>Welcome to <p><font size=3><font color=red>~ The Three Broomsticks ~ <p><font size=2><font color=aqua>Tavern and Fine Dining <p align=center><font color=green><font size=3><><><><><><><><><><><><><><p align=center><font color=blue><font size=3>|| <u>MENU</u> ||<p align=center><font size=3><font color=red><u>Beverages</u><font size=2><p align=center><font color=green><b>1. Draft Beer -50g</b> - Satisfy your craving for fun with our fine, freshly brewed beer. Made from natural ingrediants including Hippogryff Feather Extract.<p align=center><font color=green><b>2.Iced Tea - 20g</b> - Enjoy our lucious sweet tea with enachanted ice cubes floating around, that wont dissolve!  Wand-Stirred.<p align=center><font size=3><font color=red><u>Meals</u><font size=2><p align=center><font color=green><b>Turkey 100g</b> - Roasted or Fried, either way it's extremely delicious and sure to satisfy your craving for meat. Fried with our own method, the Inflamari Charm.<p align=center><font color=green>Steak - 125g </b> - Rare, Medium, Well Done, however you like your steak, you haven't lived until you've tried our Pixie Power Steak, or our Basilisk Big Boy Steak. Cooked any way you want.<font size=2><p align=center><font color=green><b>Pepperoni Pizza - 100g </b>Enjoy our finest Pizza, sprinkled with crispy, fresh baked pepperonies. Hand tossed crust with cheese baked into it.<p align=center><font color=red><u>Desserts</u><font size=2><p align=center><font color=green>Blueberry Pie - 80g</b> - Mmmm kick back with our warm, freshly baked Blueberry pie. Packed tight with extra blueberries.  Will burn crust on request!<p align=center><font color=green>CocoNut Cream Pie - 180g (Our finest dessert.)</b> - This pie is our specialty.  Smothered in coconut strips, smeared with cream and baked warm or cooled on your request. Cooled with the Glacius Charm for flash freezing. Perfect for your ice cream!  Heated with the Inflamari Charm to make it literally melt in your mouth to assure perfect sugary satisfaction. <p align=center><font color=green>Apple Pie - 75g</b> - Hot, baked apple pie. Homemade by our own, Tammie.<font size=2><p align=center><font color=green><b>Vanilla Sundae - 120g</b> Our finest dessert. Freshly roasted vanilla bean ice cream, topped with Inflamari melted fudge, and a freshly rinsed Cherry. Enchanted for extra flavour. <p><font size=1><font color=silver>*For additional items not on this menu, please see a staff member. Some items are freshly conjured and invented but haven't made it onto the menu yet. <p><font size=2><font color=white>Thanks for dining at  The Three Broomsticks!</b>"
+
+
+
+

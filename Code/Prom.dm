@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
 mob
 	PromMan
 		icon = 'PromMan.dmi'
@@ -69,7 +75,7 @@ obj/mirror
 		var/list/obj/reflection/reflections = list() //associative
 		New()
 			..()
-			overlays += new /obj/mirror/frame
+			frame = new(src)
 			base = new(src)
 			action()
 		proc
@@ -139,15 +145,10 @@ obj/mirror
 		icon_state = "frame"
 		layer = 7
 		density = 1
+		New(obj/mirror/parent)
+			loc = parent.loc
 	base
 		var/obj/mirror/glass/parent
-
-		Crossed(atom/movable/m)
-			mirror(m)
-
-		Uncrossed(atom/movable/m)
-			unmirror(m)
-
 		proc
 			mirror(atom/movable/M)
 
@@ -173,7 +174,117 @@ obj/mirror
 			src.parent = parent
 
 
+
+
+/*
+
+obj/reflection
+	layer = 4
+	pixel_y = 16
+obj/mirror
+	icon = 'mirror.dmi'
+	glass
+		icon_state = "glass"
+		layer = 3
+		density = 1
+		var/obj/mirror/frame/frame
+		var/obj/mirror/base/base
+		var/obj/reflection
+		var/atom/movable/user
+		New()
+			..()
+			frame = new(src)
+			base = new(src)
+			action()
+		proc
+			action()
+				spawn()while(src)
+					sleep(1)
+					if(user)
+						reflection.overlays = user.overlays
+						reflection.icon_state = user.icon_state
+						var/newdir
+						newdir = user.dir
+						if(user.dir == NORTH)
+							newdir = SOUTH
+						else if(user.dir == SOUTH)
+							newdir = NORTH
+						reflection.dir = newdir
+					else if(reflection)
+						del(reflection)
+
+	frame
+		icon_state = "frame"
+		layer = 5
+		density = 1
+		New(obj/mirror/parent)
+			loc = parent.loc
+	base
+		var/obj/mirror/glass/parent
+		proc
+			mirror(atom/movable/M)
+				del(parent.reflection)
+				parent.user = M
+				var/newdir
+				newdir = M.dir
+				if(M.dir == NORTH)
+					newdir = SOUTH
+				else if(M.dir == SOUTH)
+					newdir = NORTH
+				parent.reflection = new(locate(x,y+1,z))
+				parent.reflection.icon = M.icon
+				parent.reflection.icon_state = M.icon_state
+				parent.reflection.layer = 4
+				parent.reflection.pixel_y = 16
+				parent.reflection.dir = newdir
+				parent.reflection.overlays = M.overlays
+			unmirror(atom/movable/M)
+				parent.user = null
+
+		New(obj/mirror/glass/parent)
+			loc = locate(parent.x,parent.y-1,parent.z)
+			src.parent = parent
+
+obj/mirror
+	icon = 'mirror.dmi'
+	glass
+		icon_state = "glass"
+		layer = 3
+		var/obj/mirror/frame/frame
+		var/obj/mirror/base/base
+		var/obj/reflection
+		New()
+			..()
+			frame = new(src)
+			base = new(src)
+
+	frame
+		icon_state = "frame"
+		layer = 5
+		New(obj/mirror/parent)
+			loc = parent.loc
+	base
+		var/obj/mirror/glass/parent
+		proc
+			mirror(mob/M)
+				var/newdir
+				newdir = M.dir
+				if(M.dir == NORTH)
+					newdir = SOUTH
+				else if(M.dir == SOUTH)
+					newdir = NORTH
+				var/image/i = image(M.icon,M.icon_state,dir=newdir,pixel_y=16,layer=4)
+				i.overlays = M.overlays
+				parent.overlays = list(i)
+			unmirror(mob/M)
+				parent.overlays = list()
+
+		New(obj/mirror/glass/parent)
+			loc = locate(parent.x,parent.y-1,parent.z)
+			src.parent = parent*/
+
 mob/var/tmp/baseicon
+mob/var/custom_icon_C=0
 area/hogwarts/promChangeRoom
 	Exited(atom/movable/Obj)
 		. = ..()
@@ -188,8 +299,8 @@ area/hogwarts/promChangeRoom
 			var/mob/Player/p = O
 			if(promicons[p.ckey] && !p.mprevicon)
 				if(promicons[usr.ckey] != usr.icon)
-					p.mprevicon = usr.icon
-				p.icon = promicons[usr.ckey]
+					usr.mprevicon = usr.icon
+				usr.icon = promicons[usr.ckey]
 
 	New()
 		..()
@@ -206,41 +317,43 @@ area/hogwarts/promChangeRoom
 			set category = "Prom"
 			if(usr.loc.loc != src)return
 			if(alert("This will remove any uploaded icon of yours. Do this if you decide against having a custom icon for Prom. Do you wish to clear your prom icon?",,"Yes","No")=="Yes")
-				var/mob/Player/p = usr
-				p.mprevicon = null
-				promicons[p.ckey] = null
-				if(usr.Gender=="Male")
-					if(p.Gm)
-						p.icon = 'MaleStaff.dmi'
-						p.icon_state = ""
-					else if(p.House == "Gryffindor")
-						p.icon = 'MaleGryffindor.dmi'
-						p.icon_state = ""
-					else if(p.House == "Ravenclaw")
-						p.icon = 'MaleRavenclaw.dmi'
-						p.icon_state = ""
-					else if(p.House == "Slytherin")
-						p.icon = 'MaleSlytherin.dmi'
-						p.icon_state = ""
-					else if(p.House == "Hufflepuff")
-						p.icon = 'MaleHufflepuff.dmi'
-						p.icon_state = ""
+				usr.mprevicon = null
+				promicons[usr.ckey] = null
+				if(usr.custom_icon_C==1)
+					usr.icon=usr.custom_icon
 				else
-					if(p.Gm)
-						p.icon = 'FemaleStaff.dmi'
-						p.icon_state = ""
-					else if(p.House == "Gryffindor")
-						p.icon = 'FemaleGryffindor.dmi'
-						p.icon_state = ""
-					else if(p.House == "Ravenclaw")
-						p.icon = 'FemaleRavenclaw.dmi'
-						p.icon_state = ""
-					else if(p.House == "Slytherin")
-						p.icon = 'FemaleSlytherin.dmi'
-						p.icon_state = ""
-					else if(p.House == "Hufflepuff")
-						p.icon = 'FemaleHufflepuff.dmi'
-						p.icon_state = ""
+					if(usr.Gender=="Male")
+						if(usr.Gm)
+							usr.icon = 'MaleStaff.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Gryffindor")
+							usr.icon = 'MaleGryffindor.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Ravenclaw")
+							usr.icon = 'MaleRavenclaw.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Slytherin")
+							usr.icon = 'MaleSlytherin.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Hufflepuff")
+							usr.icon = 'MaleHufflepuff.dmi'
+							usr.icon_state = ""
+					else
+						if(usr.Gm)
+							usr.icon = 'FemaleStaff.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Gryffindor")
+							usr.icon = 'FemaleGryffindor.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Ravenclaw")
+							usr.icon = 'FemaleRavenclaw.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Slytherin")
+							usr.icon = 'FemaleSlytherin.dmi'
+							usr.icon_state = ""
+						else if(usr.House == "Hufflepuff")
+							usr.icon = 'FemaleHufflepuff.dmi'
+							usr.icon_state = ""
 
 		Change_Prom_Icon()
 			set category = "Prom"
@@ -250,12 +363,11 @@ area/hogwarts/promChangeRoom
 			if(!I)return
 			if(!istype(usr.loc.loc,/area/hogwarts/promChangeRoom))return
 			if(I.Width() <= 32 && I.Height() <= 32)
-				var/mob/Player/p = usr
-				promicons[p.ckey] = I
-				if(!p.mprevicon)
-					p.mprevicon = p.icon
+				promicons[usr.ckey] = I
+				if(!usr.mprevicon)
+					usr.mprevicon = usr.icon
 				//usr.loc.loc.Enter(usr)
-				p.icon = promicons[p.ckey]
+				usr.icon = promicons[usr.ckey]
 			else
 				alert("Uploaded icons must be no larger than 32 pixels wide and 32 pixels high.")
 
@@ -264,7 +376,7 @@ var/list/icon/promicons = list()
 var/prom = 0
 
 mob/test/verb/Toggle_Prom()
-	set category = "Events"
+	set category = "Staff"
 
 	switch(alert("Toggle to?", "Toggle Prom", "Active", "Inactive", "Changeroom"))
 		if("Active")

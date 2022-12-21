@@ -1,3 +1,9 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
 proc
 	bubblesort(list/L)
 		var i, j
@@ -30,16 +36,16 @@ proc
 		var i, j
 		for(i=L.len,i>0,i--)
 			for(j=1,j<i,j++)
-				var/mob/Player/j1 = L[j]
-				var/mob/Player/j2 = L[j+1]
+				var/mob/j1 = L[j]
+				var/mob/j2 = L[j+1]
 				if(j1 && j2)
-					if(j1.prevname && !j2.prevname)
+					if(j1.name == "Deatheater" && j2.name != "Deatheater")
 						if(j1.prevname>j2.name) L.Swap(j,j+1)
-					else if(j1.prevname && j2.prevname)
+					else if(j1.name == "Deatheater" && j2.name == "Deatheater")
 						if(j1.prevname>j2.prevname) L.Swap(j,j+1)
-					if(!j1.prevname && j2.prevname)
+					if(j1.name != "Deatheater" && j2.name == "Deatheater")
 						if(j1.name>j2.prevname) L.Swap(j,j+1)
-					else if(!j1.prevname && !j2.prevname)
+					else if(j1.name != "Deatheater" && j2.name != "Deatheater")
 						if(j1.name>j2.name) L.Swap(j,j+1)
 turf
 	duelmat_gryff
@@ -58,37 +64,21 @@ var/list/turf/duelsystemcenter/duelsystems = list()
 #define DUEL_DISTANCE 9
 
 Duel
-	var/mob/Player/player1
-	var/mob/Player/player2
+	var/mob/player1 = null
+	var/mob/player2 = null
 	var/ready1 = 0
 	var/ready2 = 0
+	var/countdown = 5
 	var/atom/duelcenter
 	New(var/atom/duelcenter)
 		..()
 		src.duelcenter = duelcenter
-	proc/Dispose()
-
-		for(var/i = 2 to -2 step -4)
-			var/turf/t = locate(duelcenter.x + i, duelcenter.y, duelcenter.z)
-
-			if(istype(t, /turf/duelblock))
-				t.density = 0
-			else
-				var/obj/duelblock/o = locate() in t
-				o.density = 0
-
-		if(player1)
-			player1.nomove = 0
-			player1 = null
-		if(player2)
-			player2.nomove = 0
-			player2 = null
-
-		duelcenter.overlays = list()
-		duelcenter:D = null
-		duelcenter = null
+	Del()
+		for(var/turf/duelblock/B in block(locate(duelcenter.x-5,duelcenter.y,duelcenter.z),locate(duelcenter.x+5,duelcenter.y,duelcenter.z)))
+			B.density = 0
+		player1.movable = 0
+		if(player2)player2.movable = 0
 		..()
-
 	proc
 		Pre_Duel()
 			player1.followplayer = 0
@@ -96,16 +86,19 @@ Duel
 			sleep(100)
 			if(!(ready1 && ready2))
 				range(9,duelcenter) << errormsg("<i>The players did not ready themselves within the time limit. Duel cancelled.</i>")
-				Dispose()
+				player1.movable = 0
+				player2.movable = 0
+				del src
 			else
 				player1.followplayer = 0
 				player2.followplayer = 0
-				range(9,duelcenter) << "<i><span style=\"font-size:3\">The duel will now start in 5 seconds!</span></i>"
+				range(9,duelcenter) << "<i><font size = 3>The duel will now start in [countdown] seconds!"
 				var/obj/o = new
 				o.pixel_y = 32
 				for(var/i=5;i>0;i--)
+			//		range(9,duelcenter) << i
 					duelcenter.overlays -= o
-					o.maptext = "<b><span style=\"font-size:4; color:#FF4500;\"> [i]</span></b>"
+					o.maptext = "<b><font size=4 color=#FF4500> [i]</font></b>"
 					duelcenter.overlays += o
 					sleep(10)
 				duelcenter.overlays -= o
@@ -118,22 +111,20 @@ Duel
 				else
 					for(var/turf/duelblock/B in block(locate(duelcenter.x-5,duelcenter.y,duelcenter.z),locate(duelcenter.x+5,duelcenter.y,duelcenter.z)))
 						B.density = 0
-				player1.nomove = 0
-				player2.nomove = 0
+				player1.movable = 0
+				player2.movable = 0
 				View_Check_Ticker()
 		View_Check_Ticker()
-			set waitfor = 0
-			sleep(5)
-			while(duelcenter)
-				if(get_dist(player1,duelcenter) > DUEL_DISTANCE)
-					range(DUEL_DISTANCE,duelcenter) << infomsg("<span style=\"font-size:3;\">[player1] has left the duel area. [player2] wins!</span>")
-					player1 << errormsg("<span style=\"font-size:3;\">You have left the duel area. [player2] wins.</span>")
-					Dispose()
-				else if(get_dist(player2,duelcenter) > DUEL_DISTANCE)
-					range(DUEL_DISTANCE,duelcenter) << infomsg("<span style=\"font-size:3;\">[player2] has left the duel area. [player1] wins!</span>")
-					player2 << errormsg("<span style=\"font-size:3;\">You have left the duel area. [player1] wins.</span>")
-					Dispose()
+			spawn()while(src)
 				sleep(5)
+				if(get_dist(player1,duelcenter) > DUEL_DISTANCE)
+					range(DUEL_DISTANCE,duelcenter) << infomsg("<font size=3>[player1] has left the duel area. [player2] wins!</font>")
+					player1 << errormsg("<font size=3>You have left the duel area. [player2] wins.</font>")
+					del(src)
+				else if(get_dist(player2,duelcenter) > DUEL_DISTANCE)
+					range(DUEL_DISTANCE,duelcenter) << infomsg("<font size=3>[player2] has left the duel area. [player1] wins!</font>")
+					player2 << errormsg("<font size=3>You have left the duel area. [player1] wins.</font>")
+					del(src)
 turf/duelblock/density=0
 obj
 	portduelsystemtiles
@@ -163,13 +154,13 @@ turf
 					D.player1 = usr
 					D.player1:Transfer(locate(x-3,y,z))
 					D.player1.dir = EAST
-					D.player1.nomove = 1
+					D.player1.movable = 1
 					range(9) << "[usr] enters the duel."
 				else if(!D.player2 && D.player1 != usr)
 					D.player2 = usr
 					D.player2:Transfer(locate(x+3,y,z))
 					D.player2.dir = WEST
-					D.player2.nomove = 1
+					D.player2.movable = 1
 					range(9) << "[usr] enters the duel."
 					for(var/turf/duelblock/B in block(locate(x-5,y,z),locate(x+5,y,z)))
 						B.density = 1
@@ -179,7 +170,8 @@ turf
 				else if(D.player1 == usr)
 					if(!D.player2)
 						range(9) << "[usr] withdraws."
-						D.Dispose()
+						usr.movable = 0
+						del D
 					else
 						if(!D.ready1)
 							range(9) << "<i>[usr] bows.</i>"
@@ -191,11 +183,17 @@ turf
 								usr << "Duel will end in 10 seconds."
 								sleep(100)
 								range(9) << "The duel has been forfeited by [usr]."
-								if(D) D.Dispose()
+								if(D.player1)D.player1.movable = 0
+								if(D.player2)D.player2.movable = 0
+								spawn(60)
+									for(var/turf/duelblock/B in block(locate(x-5,y,z),locate(x+5,y,z)))
+										B.density = 0
+								del D
 				else if(D.player2 == usr)
 					if(!D.player1)
 						range(9) << "[usr] withdraws."
-						D.Dispose()
+						usr.movable = 0
+						del D
 					else
 						if(!D.ready2)
 							range(9) << "<i>[usr] bows.</i>"
@@ -207,13 +205,18 @@ turf
 								usr << "Duel will end in 10 seconds."
 								sleep(100)
 								range(9) << "The duel has been forfeited by [usr]."
-								D.Dispose()
+								spawn(60)
+									for(var/turf/duelblock/B in block(locate(x-5,y,z),locate(x+5,y,z)))
+										B.density = 0
+								del D
+
 				else
 					usr << "Both player positions are already occupied."
 			else
 				D = new(src)
+				D.countdown = 5//input("Select count-down timer, for when both players have readied. (between 3 and 10 seconds)","Count-down Timer",D.countdown) as null|num
 				range(9) << "[usr] initiates a duel."
 				D.player1 = usr
 				D.player1:Transfer(locate(x-3,y,z))
 				D.player1.dir = EAST
-				D.player1.nomove = 1
+				D.player1.movable = 1

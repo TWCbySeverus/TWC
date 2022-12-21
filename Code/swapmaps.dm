@@ -2,16 +2,12 @@
 	SwapMaps library by Lummox JR
 	developed for digitalBYOND
 	http://www.digitalbyond.org
-
 	Version 2.1
-
 	The purpose of this library is to make it easy for authors to swap maps
 	in and out of their game using savefiles. Swapped-out maps can be
 	transferred between worlds for an MMORPG, sent to the client, etc.
 	This is facilitated by the use of a special datum and a global list.
-
 	Uses of swapmaps:
-
 	- Temporary battle arenas
 	- House interiors
 	- Individual custom player houses
@@ -23,27 +19,21 @@
 
 /*
 	User Interface:
-
 	VARS:
-
 	swapmaps_directory
 		The directory used for saving/loading
-
 	swapmaps_iconcache
 		An associative list of icon files with names, like
 		'player.dmi' = "player"
 	swapmaps_mode
 		This must be set at runtime, like in world/New().
-
 		SWAPMAPS_SAV	0	(default)
 			Uses .sav files for raw /savefile output.
 		SWAPMAPS_TEXT	1
 			Uses .txt files via ExportText() and ImportText(). These maps
 			are easily editable and appear to take up less space in the
 			current version of BYOND.
-
 	PROCS:
-
 	SwapMaps_Find(id)
 		Find a map by its id
 	SwapMaps_Load(id)
@@ -78,7 +68,6 @@
 		Returns null if the map is not found.
 	SwapMaps_AddIconToCache(name,icon)
 		Cache an icon file by name for space-saving storage
-
 	swapmap.New(id,x,y,z)
 		Create a new map; specify id, width (x), height (y), and
 		 depth (z)
@@ -303,7 +292,6 @@ swapmap
 		If no space is found, increase world.maxz as necessary. (If the
 		map is greater in x,y size than the current world, expand
 		world.maxx and world.maxy too.)
-
 		Ignore certain operations if loading a map as a chunk. Use the
 		x1,y1,z1 position for it, and *don't* count it as a loaded map.
 	 */
@@ -421,7 +409,6 @@ swapmap
 	/*
 		Build procs: Take 2 turfs as corners, plus an item type.
 		An item may be like:
-
 		/turf/wall
 		/obj/fence{icon_state="iron"}
 	 */

@@ -1,29 +1,47 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
 mob/Player
-	var/tmp
-		slow       = 0
-		move_delay = 1
-		reading    = 0
-		nomove     = 0
-
-turf
-	Exit(atom/movable/O, atom/newloc)
-		.=..()
-
-		if(isplayer(O) && . && newloc)
-			var/mob/Player/p = O
-			if(p.teleporting) return
-			if(isobj(newloc)) return
-
-			if(!p.unslow)
-				var/turf/t = newloc
-				p.move_delay = t.slow + 1
+	var/tmp/slow = 0
+	Move(newloc, newdir)
+		if(teleporting)
+			..()
+			return
+		if(frozen||stuned||moving||arcessoing||GMFrozen)return
+		if(isobj(newloc))
+			..()
+		else if(loc)
+			if((loc:slow && !unslow) || slow)
+				var/delay = slow == 0 ? loc:slow : slow
+				moving=1
+				..()
+				sleep(delay)
+				moving=0
 			else
-				p.move_delay = 1
-
-turf/var/tmp/slow = 0
-
+				..()
+turf/var/tmp/slow=0
+mob
+   var/tmp
+      moving
+mob
+	var
+		reading=0
+		frozen=0
+		stuned=0
 
 turf
+/*	DEblocker
+		Enter(mob/You/Y)
+			if(istype(Y,/mob/You))
+				if(Y.Auror) return ..()
+
+	Aurorblocker
+		Enter(mob/You/Y)
+			if(istype(Y,/mob/You))
+				if(Y.DeathEater) return ..()*/
 	Huffleblocker
 		Enter(mob/Player/Y)
 			if(istype(Y,/mob/Player))
@@ -43,9 +61,8 @@ turf
 	DEblocker
 		Enter(mob/Player/Y)
 			if(istype(Y,/mob/Player))
-				if(Y.guild && Y.guild == worldData.majorPeace) return ..()
-
+				if(Y.aurorrobe) return ..()
 	Aurorblocker
 		Enter(mob/Player/Y)
 			if(istype(Y,/mob/Player))
-				if(Y.guild && Y.guild == worldData.majorChaos) return ..()
+				if(Y.derobe) return ..()

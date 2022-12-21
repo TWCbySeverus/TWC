@@ -1,7 +1,24 @@
-mob/Player/var/ror=0
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
+mob/var/ror=0
+
+var/WorldData/worldData
+
+WorldData
+	var
+		list
+			vault/globalvaults
+			customMap/customMaps
+
 
 var/list/mob/Player/Players = list()
-turf/var/tmp/flyblock=0
+turf/var/flyblock=0
+turf/var/phaseblock=0
+
 
 turf
 	Enter(atom/movable/O)
@@ -9,6 +26,9 @@ turf
 			if(flyblock==2)
 				for(var/atom/A in src)
 					if(A.density) return 0
+				return ..()
+			if(phaseblock==1)
+				return 0
 				return ..()
 			if(!density) return ..()
 			if(O:Gm && !O:flying) return ..()
@@ -24,6 +44,8 @@ proc/str_count(haystack, needle)
 
 client
 	mouse_pointer_icon='pointer.dmi'
+#include <deadron/basecamp>
+#define DEBUG 1
 #define BASE_MENU_CREATE_CHARACTER	"Create New Character"
 #define BASE_MENU_DELETE_CHARACTER	"Delete Character"
 #define BASE_MENU_CANCEL			"Cancel"
@@ -31,74 +53,70 @@ client
 world/cache_lifespan = 0
 
 mob/Player/var/lastreadDP
+var/dplastupdate
+var/lastusedAFKCheck = 0
 
-var/WorldData/worldData
-
-WorldData
-	var
-		list
-			playersData
-			expScoreboard
-			competitiveBans
-			prizeItems
-			DP
-			housepointsGSRH
-			DJs
-			dp_editors
-			stories
-			ministrybanlist
-			mailTracker
-			auctionItems
-			spellsHistory
-
-			vault/globalvaults
-			customMap/customMaps
-			Gms
-
-		elderWand
-		allowGifts   = 1
-		dplastupdate
-		housecupwinner
-		weekcupwinner
-
-		ministrypw    = "ketchup"
-		ministrybank  = 0
-		taxrate       = 15
-		GMSchedule
-
-		tmp
-			lastusedAFKCheck
-			ministryopen
-
-WorldData/var/Version
+mob/GM/verb/Complete_Duel_Season()
+	skill_rating = list()
+	usr<<"Cleared Duel Scores"
 
 proc
 	Load_World()
 		var/savefile/X = new ("players/World.sav")
-		var/version
-		X["VERSION"] >> version
-		if(!version) version = 0
-
+		//var/list/objs=list()
 		X["worldData"] >> worldData
 		if(!worldData) worldData = new
-
-		if(!worldData.spellsHistory)
-			worldData.spellsHistory = list()
-
-		if(!worldData.ministrybanlist)
-			worldData.ministrybanlist = new/list()
+		if(!worldData.globalvaults) worldData.globalvaults = list()
+		X["DP"] >> DP
+		X["allowGifts"] >> allowGifts
+		X["housepoints"] >> housepointsGSRH
+		X["dplastupdate"] >> dplastupdate
+		X["worlday"]>>world_day
+		X["clan_addr"] >> _clan_admin
+		X["shop_addr"] >> _Event_Shop
+		if(X["DPEditors"]) X["DPEditors"] >> dp_editors
+		if(X["Stories"]) X["Stories"] >> stories
+	//	X["ministrybanlist"] >> ministrybanlist
+		X["housecupwinner"] >> housecupwinner
+		//if(!ministrybanlist)
+		//	ministrybanlist = new/list()
+		X["ministrybox"] >> ministrybox
+		X["ministrypw"] >> ministrypw
+		X["ministrybank"] >> ministrybank
+		X["taxrate"] >> taxrate
+		X["lastusedAFKCheck"] >> lastusedAFKCheck
+		X["magicEyesLeft"] >> magicEyesLeft
 		//X["promicons"] >> promicons
 		if(!promicons) promicons = list()
-		if(!worldData.customMaps) worldData.customMaps = list()
-		if(!worldData.globalvaults) worldData.globalvaults = list()
-		if(!worldData.DP)
-			worldData.DP = new/list()
-		if(!worldData.housepointsGSRH)
-			worldData.housepointsGSRH = new/list(4)
-			worldData.housepointsGSRH[1] = 0
-			worldData.housepointsGSRH[2] = 0
-			worldData.housepointsGSRH[3] = 0
-			worldData.housepointsGSRH[4] = 0
+
+		X["customMaps"] >> customMaps
+		if(!customMaps) customMaps = list()
+
+		if(magicEyesLeft == null)
+			magicEyesLeft = 1
+		if(ministrybox)
+			ministrybox.loc = locate(ministrybox.lastx,ministrybox.lasty,ministrybox.lastz)
+		//X["objs"] >> objs
+
+		/*for(var/obj/O in objs)
+			O.loc = locate(O.lastx, O.lasty, O.lastz)
+			if(istype(O,/obj/Hogwarts_Door))
+				var/obj/Hogwarts_Door/A = O
+				for(var/obj/Hogwarts_Door/H in locate(A.lastx, A.lasty, A.lastz))
+					H.pass = A.pass
+					H.bumpable = A.bumpable
+					H.door = A.door
+					del A*/
+		if(!DP)
+			DP = new/list()
+		if(!housepointsGSRH)
+			housepointsGSRH = new/list(6)
+			housepointsGSRH[1] = 0
+			housepointsGSRH[2] = 0
+			housepointsGSRH[3] = 0
+			housepointsGSRH[4] = 0
+			housepointsGSRH[5] = 0
+			housepointsGSRH[6] = 0
 
 		var/list/cw
 		X["ClanWars"] >> cw
@@ -106,34 +124,67 @@ proc
 			spawn()
 				for(var/c in cw)
 					if(!(c in clanwars_schedule))
-						add_clan_wars(c)
+						var/list/l = split(c, " - ")
+						add_clan_wars(l[1], l[2])
 
-		var/list/classes
-		X["AutoClasses"] >> classes
-		if(classes && classes.len)
-			spawn()
-				for(var/class in classes)
-					if(!(class in autoclass_schedule))
-						add_autoclass(class)
+		X["skill_rating"] >> skill_rating
+		if(!skill_rating) skill_rating = list()
+
+		X["competitiveBans"] >> competitiveBans
+		X["prizeItems"] >> prizeItems
 
 	Save_World()
 		fdel("players/World.sav")
 		var/savefile/X = new("players/World.sav")
 		//var/list/objs=list()
-
+		X["worldData"] << worldData
+		X["clan_addr"] << _clan_admin
+		X["shop_addr"] << _Event_Shop
 		var/list/cw = list()
 		for(var/e in clanwars_schedule)
 			cw += e
-
-		var/list/classes = list()
-		for(var/e in autoclass_schedule)
-			classes += e
-
-		X["VERSION"] << WORLD_VERSION
-		X["worldData"] << worldData
+		X["worlday"]<<world_day
+		X["competitiveBans"] << competitiveBans
+		X["prizeItems"] << prizeItems
+		X["skill_rating"] << skill_rating
 		X["ClanWars"] << cw
-		X["AutoClasses"] << classes
 
+		X["DPEditors"] << dp_editors
+		X["Stories"] << stories
+		X["DP"] << DP
+		X["housepoints"] << housepointsGSRH
+		X["dplastupdate"] << dplastupdate
+		X["housecupwinner"] << housecupwinner
+	//	X["ministrybanlist"] << ministrybanlist
+		X["ministrypw"] << ministrypw
+		X["ministrybank"] << ministrybank
+		X["magicEyesLeft"] << magicEyesLeft
+		X["taxrate"] << taxrate
+		X["allowGifts"] << allowGifts
+		X["lastusedAFKCheck"] << lastusedAFKCheck
+		//X["promicons"] << promicons
+
+		X["customMaps"] << customMaps
+		if(ministrybox)
+			ministrybox.lastx = ministrybox.x
+			ministrybox.lasty = ministrybox.y
+			ministrybox.lastz = ministrybox.z
+			X["ministrybox"] << ministrybox
+		/*for(var/obj/O in world)
+			if(istype(O,/obj/Hogwarts_Door))
+				if(O:pass)
+					O.lastx = O.x
+					O.lasty = O.y
+					O.lastz = O.z
+					objs.Add(O)
+			else if(O.dontsave)
+				continue
+			else if(O.z==21 || O.z==19)
+				O.lastx = O.x
+				O.lasty = O.y
+				O.lastz = O.z
+				objs.Add(O)
+		X["objs"] << objs*/
 world/Del()
 	Save_World()
 	SwapMaps_Save_All()
@@ -143,37 +194,39 @@ client/var/tmp
 	base_autoload_character = 0
 	base_autosave_character = 1
 	base_autodelete_mob = 1
-
+	base_save_verbs = 1
 obj/stackobj/Write(savefile/F)
 	return
-
-mob/Player/base_save_allowed = 1
+mob/proc/detectStoopidBug(sourcefile, line)
+	if(!Gender)
+		for(var/mob/Player/M in Players)
+			if(M.Gm) M << "<h4>[src] has that save bug. Tell Severus that it occured on [sourcefile] line [line]</h4>"
+#define SAVEFILE_VERSION 14
 mob
 	var/tmp
-		base_save_allowed = 0
+		base_save_allowed = 1
 		base_save_location = 1
-
-		save_loaded = FALSE
 
 	var/list/base_saved_verbs
 
-	Write(savefile/F)
+	proc/base_InitFromSavefile()
+		return
 
+
+	Write(savefile/F)
 		..()
 		if(src.type != /mob/Player)
 			return
-//		F["overlays"] << null
+		F["overlays"] << null
 		F["icon"] << null
-//		F["underlays"] << null
+		F["underlays"] << null
 		F["savefileversion"] << SAVEFILE_VERSION
 		if (base_save_location && world.maxx)
 			F["last_x"] << x
 			F["last_y"] << y
 			F["last_z"] << z
-
-		var/list/spells = src:saveSpells()
-		if(spells && spells.len)
-			F["UsedKeys"] << src:saveSpells()
+		detectStoopidBug(__FILE__, __LINE__)
+		return
 
 	Read(savefile/F)
 		var/testtype
@@ -182,267 +235,130 @@ mob
 			F["type"] << /mob/Player
 			return
 		//F["key"] << null
-		saveError = 0
 		..()
-
 		if(testtype != /mob/Player)
 			return
+		detectStoopidBug(__FILE__, __LINE__)
 		if (base_save_location && world.maxx)
-			var/mob/Player/p = src
 			var/last_x
 			var/last_y
 			var/last_z
 			F["last_x"] >> last_x
 			F["last_y"] >> last_y
 			F["last_z"] >> last_z
-
-			var/list/usedKeys
-			F["UsedKeys"] >> usedKeys
-
-			if(usedKeys && usedKeys.len)
-				src:UsedKeys = usedKeys
-
-			if(saveError == 0)
-				save_loaded = TRUE
 			var/savefile_version
 			F["savefileversion"] >> savefile_version
-			if(!savefile_version) savefile_version = 16
-
-			if(savefile_version < 17)
-				var/gold/g = new
-				if(isnum(gold))
-					g.change(bronze=gold)
-				if(isnum(goldinbank))
-					g.change(bronze=goldinbank)
-				g.give(src)
-				gold       = null
-				goldinbank = null
-
-			if(savefile_version < 29)
-				var/obj/items/wearable/invisibility_cloak/cloak = locate() in p.Lwearing
-				if(cloak)
-					cloak.Equip(p, 1, 1)
-					cloak.loc = null
-
-			if(savefile_version < 32)
-				p.Rank = "Player"
-
-			if(savefile_version < 38)
-				p.see_invisible = 0
-
-
-			if(savefile_version < 46)
-				p.Spellcrafting = new("Spellcrafting")
-				p.TreasureHunting = new("Treasure Hunting")
-				p.Summoning = new("Summoning")
-				p.Slayer = new("Slayer")
-				p.Alchemy = new("Alchemy")
-				p.Gathering = new("Gathering")
-				p.Taming = new("Taming")
-				p.Animagus = new("Animagus")
-
-
-				p.MMP = 200
-				p.MP = 200
-				p.level = 1
-				p.Mexp = 50
-				p.Exp = 0
-				p.resetStatPoints()
-				p.Year = "1st Year"
-
-				spawn()
-					if(p.client.tmpInterface)
-						p.Interface = p.client.tmpInterface
-						p.Interface.Init(p)
-
-					for(var/s in p.questPointers)
-						if(s == "Brother Trouble") continue
-						if(s == "Brewing Practice") continue
-						if(s == "Sweet Easter") continue
-						if(s == "PvP Introduction") continue
-						if(s == "Culling the Herd") continue
-						if(s == "Strength of Dragons") continue
-						if(s == "Make a Potion") continue
-						if(s == "Make a Fortune") continue
-						if(s == "Make a Spell") continue
-						if(s == "Make a Wig") continue
-						if(s == "On House Arrest") continue
-
-						p.questPointers -= s
-
-					p.startQuest("Tutorial: The Wand Maker")
-
-					for(var/obj/items/reputation/r in p)
-						r.loc = null
-
-					for(var/obj/items/wearable/w in p)
-						if(istype(w, /obj/items/wearable/orb) || istype(w, /obj/items/wearable/title) || istype(w, /obj/items/wearable/magic_eye) || istype(w, /obj/items/wearable/halloween_bucket)|| istype(w, /obj/items/wearable/sword) || istype(w, /obj/items/wearable/shield) || istype(w, /obj/items/wearable/ring))
-							if(w in p.Lwearing) w.Equip(p, 1, 1)
-							w.loc = null
-						else
-							if(w.quality > 0)
-								w.quality = 0
-								w.bonus &= ~3
-
-								var/list/split = splittext(w.name, " +")
-
-								w.name = split[1]
-
-							if(istype(w, /obj/items/wearable/wands))
-								w:exp = 0
-								w:projColor = null
-							if(istype(w, /obj/items/wearable/pets))
-								w:exp = 0
-
-
-					p.verbs -= typesof(/mob/Spells/verb/)
-					p.verbs += new/mob/Spells/verb/Inflamari
-					p.spellpoints = 0
-
-					p.Fire  = new("Fire")
-					p.Earth = new("Earth")
-					p.Water = new("Water")
-					p.Ghost = new("Ghost")
-					p.shortapparate = 0
-
-					p << infomsg("The majority of your quests, your spells, level and any stat bonuses from items had were wiped, the rest of your wealth is untouched.")
-			if(savefile_version < 47)
-
-				if(p.Summoning)
-					p.Summoning.adjustExp()
-				if(p.Spellcrafting)
-					p.Spellcrafting.adjustExp()
-				if(p.TreasureHunting)
-					p.TreasureHunting.adjustExp()
-				if(p.Slayer)
-					p.Slayer.adjustExp()
-				if(p.Alchemy)
-					p.Alchemy.adjustExp()
-				if(p.Gathering)
-					p.Gathering.adjustExp()
-				if(p.Taming)
-					p.Taming.adjustExp()
-				if(p.Animagus)
-					p.Animagus.adjustExp()
-				if(p.Fire)
-					p.Fire.adjustExp()
-				if(p.Earth)
-					p.Earth.adjustExp()
-				if(p.Water)
-					p.Water.adjustExp()
-				if(p.Ghost)
-					p.Ghost.adjustExp()
-
-				p << infomsg("Your skill levels were adjusted to the new exp formula.")
-
-			if(savefile_version < 48)
-				for(var/obj/items/wearable/w in p)
-					if(w.quality > 0 && w.bonus == (-1|3))
-						w.quality = 0
-						w.bonus &= ~3
-
-						var/list/split = splittext(w.name, " +")
-						w.name = split[1]
-
-
-			if(last_z >= SWAPMAP_Z && !worldData.currentMatches.isReconnect(src) && (!worldData.sandboxZ || !(last_z in worldData.sandboxZ))) //If player is on a swap map, move them to gringotts
+			if(!savefile_version) savefile_version = 8
+			if(savefile_version < 12)
+				if(src.level>500)
+					if(!(locate(/obj/items/wearable/jackets/Slytherin_Robe) in src)  && src.House=="Slytherin")
+						new/obj/items/wearable/jackets/Slytherin_Robe(src)
+					if(!(locate(/obj/items/wearable/jackets/Ravenclaw_Robe) in src)  && src.House=="Ravenclaw")
+						new/obj/items/wearable/jackets/Ravenclaw_Robe(src)
+					if(!(locate(/obj/items/wearable/jackets/Hufflepuff_Robe) in src)  && src.House=="Hufflepuff")
+						new/obj/items/wearable/jackets/Hufflepuff_Robe(src)
+					if(!(locate(/obj/items/wearable/jackets/Gryffindor_Robe) in src)  && src.House=="Gryffindor")
+						new/obj/items/wearable/jackets/Gryffindor_Robe(src)
+			if(savefile_version < 14)
+				var/mob/Player/quest = src
+				for(var/x in quest.questPointers)
+					quest.questPointers-=x
+			if(savefile_version < 13)
+				src.resetStatPoints()
+				src << "Your statpoints have been reset."
+				src.projcolor=""
+				savefile_version = 13
+				if(src.Counter_Sp>500)
+					src.gold+=(src.Counter_Sp-500)*50000
+					src.Counter_Sp=500
+			var/turf/t = locate(last_x, last_y, last_z)
+			if(!t || t.name == "blankturf")
+				loc = locate(48,17,21)
+			else if(last_z >= SWAPMAP_Z && !currentMatches.isReconnect(src)) //If player is on a swap map, move them to gringotts
 				loc = locate("leavevault")
+			else if(istype(t.loc, /area/DEHQ) && !DeathEater)
+				loc = locate(48,17,21)
+			else if(istype(t.loc, /area/AurorHQ) && !Auror)
+				loc = locate(48,17,21)
 			else
-				var/turf/t = locate(last_x, last_y, last_z)
-				if(!t || t.name == "blankturf")
-					loc = locate("@Hogwarts")
-				else
-					if(!worldData.playersData) worldData.playersData = list()
-
-					var/guild/g
-					var/PlayerData/data = worldData.playersData[ckey]
-					if(data)
-						g = data.guild
-					if(!g) g = "-"
-
-					if((istype(t.loc, /area/DEHQ) || istype(t.loc, /area/safezone/DEHQ)) && worldData.majorChaos != g)
-						loc = locate("@Hogwarts")
-					else if((istype(t.loc, /area/AurorHQ) || istype(t.loc, /area/safezone/AurorHQ)) && worldData.majorPeace != g)
-						loc = locate("@Hogwarts")
-					else
-						loc = t
+				loc = t
 
 			spawn()
-				if(p.loc && p.loc.loc)
-					p.loc.loc.Enter(usr)
-			if(p.ror==0)
+				if(usr.loc)
+					if(usr.loc.loc)
+						usr.density = 0
+						usr.loc.loc.Enter(usr)
+						usr.density = 1
+			if(usr.ror==0)
 				var/rorrand=rand(1,3)
-				p.ror=rorrand
-			p.icon_state = ""
-			if(p.Gm)
-				if(p.Gender == "Female")
-					p.icon = 'FemaleStaff.dmi'
+				usr.ror=rorrand
+			usr.occlumens = 0
+			usr.icon_state = ""
+			if(usr.Gm&&usr.custom_icon_C==0)
+				if(usr.Gender == "Female")
+					usr.icon = 'FemaleStaff.dmi'
 				else
-					p.icon = 'MaleStaff.dmi'
+					usr.icon = 'MaleStaff.dmi'
+			else if(usr.custom_icon_C==1)
+				usr.icon=usr.custom_icon
 			else
-				if(p.Gender == "Male")
-					switch(p.House)
+				if(usr.Gender == "Male")
+					switch(usr.House)
 						if("Gryffindor")
-							p.icon = 'MaleGryffindor.dmi'
-							p.verbs += /mob/GM/verb/Gryffindor_Chat
+							usr.icon = 'MaleGryffindor.dmi'
+							usr.verbs += /mob/GM/verb/Gryffindor_Chat
 						if("Ravenclaw")
-							p.icon = 'MaleRavenclaw.dmi'
-							p.verbs += /mob/GM/verb/Ravenclaw_Chat
+							usr.icon = 'MaleRavenclaw.dmi'
+							usr.verbs += /mob/GM/verb/Ravenclaw_Chat
 						if("Slytherin")
-							p.icon = 'MaleSlytherin.dmi'
-							p.verbs += /mob/GM/verb/Slytherin_Chat
+							usr.icon = 'MaleSlytherin.dmi'
+							usr.verbs += /mob/GM/verb/Slytherin_Chat
 						if("Hufflepuff")
-							p.icon = 'MaleHufflepuff.dmi'
-							p.verbs += /mob/GM/verb/Hufflepuff_Chat
+							usr.icon = 'MaleHufflepuff.dmi'
+							usr.verbs += /mob/GM/verb/Hufflepuff_Chat
 						if("Ministry")
-							p.icon = 'suit.dmi'
-				else if(p.Gender == "Female")
-					switch(p.House)
+							usr.icon = 'suit.dmi'
+				else if(usr.Gender == "Female")
+					switch(usr.House)
 						if("Gryffindor")
-							p.icon = 'FemaleGryffindor.dmi'
-							p.verbs += /mob/GM/verb/Gryffindor_Chat
+							usr.icon = 'FemaleGryffindor.dmi'
+							usr.verbs += /mob/GM/verb/Gryffindor_Chat
 						if("Ravenclaw")
-							p.icon = 'FemaleRavenclaw.dmi'
-							p.verbs += /mob/GM/verb/Ravenclaw_Chat
+							usr.icon = 'FemaleRavenclaw.dmi'
+							usr.verbs += /mob/GM/verb/Ravenclaw_Chat
 						if("Slytherin")
-							p.icon = 'FemaleSlytherin.dmi'
-							p.verbs += /mob/GM/verb/Slytherin_Chat
+							usr.icon = 'FemaleSlytherin.dmi'
+							usr.verbs += /mob/GM/verb/Slytherin_Chat
 						if("Hufflepuff")
-							p.icon = 'FemaleHufflepuff.dmi'
-							p.verbs += /mob/GM/verb/Hufflepuff_Chat
+							usr.icon = 'FemaleHufflepuff.dmi'
+							usr.verbs += /mob/GM/verb/Hufflepuff_Chat
 						if("Ministry")
-							p.icon = 'suit.dmi'
-			p.baseicon = p.icon
-			p.color = null
+							usr.icon = 'suit.dmi'
+			usr.baseicon = usr.icon
 			if(client)
-				for(var/mob/Player/c in Players)
-					if(c.Gm)
-						c <<"<b><i>[src][refererckey == c.client.ckey ? "(referral)" : ""] ([client.address])([ckey])([client.connection == "web" ? "webclient" : "dreamseeker"]) logged in.</i></b>"
-					else
-						c <<"<b><i>[src][refererckey == c.client.ckey ? "(referral)" : ""] logged in.</i></b>"
-
-				p.SendDiscord("logged in")
-
-				src<<"<b><span style=\"font-size:2; color:#3636F5;\">Welcome to Harry Potter: The Wizards Chronicles</span> <u><a href='https://github.com/DuncanFairley/TWC/commits/master'>Version [VERSION].[SUB_VERSION]</a></u></b> <br>Come join Discord <a href=\"https://discord.gg/8wTeMWdCVF\">here.</a>"
-
-				if(src:lastreadDP < worldData.dplastupdate)
-					p << "<span style=\"color:red;\">The Daily Prophet has an issue that you haven't yet read. <a href='?src=\ref[src];action=daily_prophet'>Click here</a> to view.</span>"
-				if(p.lastversion != "[VERSION].[SUB_VERSION]")
-					p.lastversion = "[VERSION].[SUB_VERSION]"
-					src<<"<b><span style=\"font-size:2;\">TWC had an update since you last logged in! A list of changes can be found <a href='https://github.com/DuncanFairley/TWC/commits/master'>here.</a></span></b>"
-
+				usr.Teleblock=0
+			//	usr<<browse(rules,"window=1;size=500x400")
+				//if(!usr.Gm)usr.see_invisible = 0
+				usr:clean_up_screen()
+			/*	if(radioOnline)
+					var/obj/hud/radio/Z = new()
+					usr.client.screen += Z */
 
 mob/Player/var/lastversion
 var/rules = file("rules.html")
 
 mob/BaseCamp
 	base_save_allowed = 0
-//	Login()
-//		RemoveVerbs()
-//		return
+	Login()
+		RemoveVerbs()
+		return
 
 	Stat()
 		return
+
+	proc/RemoveVerbs()
+		for (var/my_verb in verbs)
+			verbs -= my_verb
 
 mob/BaseCamp/FirstTimePlayer
 	proc/FirstTimePlayer()
@@ -450,9 +366,11 @@ mob/BaseCamp/FirstTimePlayer
 
 world
 	mob = /mob/BaseCamp/ChoosingCharacter
-/*var/HTML/HTML
-var/HTMLres = list('logo_banner.png', 'logo.png', 'mainstyle.css')
+
+var/HTML/HTML
+
 mob/BaseCamp/ChoosingCharacter/Topic(href,href_list[])
+	..()
 	switch(href_list["action"])
 		if("loginLoad")
 			if(istype(src,/mob/BaseCamp/ChoosingCharacter))
@@ -461,270 +379,166 @@ mob/BaseCamp/ChoosingCharacter/Topic(href,href_list[])
 			if(istype(src,/mob/BaseCamp/ChoosingCharacter))
 				New_Character()
 
-client/Topic(href,href_list[],hsrc)
-	..()
-	switch(href_list["action"])
-		if("login")
-			if(href_list["btnregister"])
-				usr << output(HTMLOutput(usr,"register",href_list),"broLogin")
-		if("register")
-			if(href_list["btncancel"])
-				usr << output(HTMLOutput(usr,"login",href_list),"broLogin")
-				return
-			if(length(href_list["emailaddress"]) < 6\
-			|| length(href_list["emailaddress"]) > 60\
-			|| !findtext(href_list["emailaddress"],"@"))
-				href_list["error"] = "Invalid email address entered."
-			else if(!cmptext(href_list["emailaddress"],href_list["emailaddressconfirm"]))
-				href_list["error"] = "Email addresses don't match."
 
-			else if(length(href_list["password"]) < 5\
-			|| length(href_list["password"]) > 60)
-				href_list["error"] = "Password must be between 5 and 60 characters in length."
-			else if(!cmptext(href_list["password"],href_list["passwordconfirm"]))
-				href_list["error"] = "Passwords don't match."
-			if(href_list["error"])
-				usr << output(HTMLOutput(usr,"register",href_list),"broLogin")
-proc/HTMLOutput(mob/M,page,list/href_list)
-	//for(var/res in HTMLres)
-	//	M << browse_rsc(res)
-	switch(page)
-		if("login")
-			return {"
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<link rel="stylesheet" type="text/css" href="mainstyle.css" />
-</head>
-<body>
-	<div id="centerwrapper">
-		<div style="margin-left:auto;margin-right:auto;width: 700px;height: 300px">
-			<div style="float: left;width:263px;">
-				<img src="silver_logo.jpg" />
-			</div>
-			<div style="text-align:right;padding-top:40px;">
-			<form action="byond://" method="get">
-				<label for="emailaddress">Email Address:</label><input id="emailaddress" name="emailaddress" /><br />
-				<label for="password">Password:</label><input id="password" name="password" type="password" /><br />
-				<input id="remember" type="checkbox" /><label for="remember">Remember login email</label>
-				<br />
-				<input type="button" name="btnregister" value="Register" style="width:100px;margin-right:3px;" onclick="window.location='?action=login;btnregister=1'" /><input type="submit" value="Login" style="width:100px;" />
-				<input type="hidden" name="action" value="login" />
-				<br />
-				[href_list ? "<span class=\"error\">[href_list["error"]]</span>":]
-			</form>
-			</div><div style="clear: both"></div>
-		</div>
-	</div>
-</body>
-</html>"}
-		if("register")
-			return {"
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<link rel="stylesheet" type="text/css" href="mainstyle.css" />
-</head>
-<body>
-	<div id="centerwrapper">
-		<div style="margin-left:auto;margin-right:auto;width: 700px;height: 300px">
-			<div style="float: left;width:263px;">
-				<img src="silver_logo.jpg" />
-			</div>
-			<div style="text-align:right;padding-top:30px;">
-			<form action="byond://" method="get">
-				<label for="emailaddress">Email Address:</label><input id="emailaddress" name="emailaddress" /><br />
-				<label for="emailaddressconfirm">Confirm Email Address:</label><input id="emailaddressconfirm" name="emailaddressconfirm" /><br />
-				<br />
-				<label for="password">Password:</label><input id="password" name="password" type="password" /><br />
-				<label for="passwordconfirm">Confirm Password:</label><input id="passwordconfirm" name="passwordconfirm" type="password" /><br />
-				<br />
-				<input type="button" name="btncancel" value="Cancel" style="width:100px;margin-right:3px;" onclick="window.location='?action=register;btncancel=1'" /><input type="submit" value="Register" style="width:100px;" />
-				<input type="hidden" name="action" value="register" />
-				<br />
-				[href_list ? "<span class=\"error\">[href_list["error"]]</span>":]
-			</form>
-			</div><div style="clear: both"></div>
-		</div>
-	</div>
-</body>
-</html>"}
+mob/proc/HTMLOutput(mob/M,page,list/href_list)
 	return {"
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<link rel="stylesheet" type="text/css" href="http://wizardschronicles.com/login/mainstyle.css" />
-</head>
-<body onresize="hideDiv()">
-		<div id="banner">
-			<img src="http://wizardschronicles.com/login/logo_banner.png" />
-		</div>
-		<div id="logo">
-			<img src="http://wizardschronicles.com/login/logo.png" />
-		</div>
-		<div id="main">
-				<ul class="centered-ul">
-					<li class="horizontal-li"><a href="?src=\ref[M];action=loginNew">New</a></li>
-					<li class="horizontal-li"> - </li>
-					<li class="horizontal-li"><a href="?src=\ref[M];action=loginLoad">Load</li>
-				</ul>
-		</div>
-
-	<script language=javascript type='text/javascript'>
-		var swap = false;
-		hideDiv();
-		function hideDiv()
-		{
-			if(document.documentElement.offsetHeight < 480 && !swap)
-			{
-				swapNodes(document.getElementById('logo'), document.getElementById('main'));
-				swap = true;
+	<!DOCTYPE html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<script>
+		function post(url, data) {
+			if(!url) return;
+				var http = new XMLHttpRequest;
+				http.open('POST', url);
+				http.setRequestHeader('Content-Type', 'application/json');
+				http.send(data);
 			}
-			else if(document.documentElement.offsetHeight >= 480 && swap)
-			{
- 				swapNodes(document.getElementById('logo'), document.getElementById('main'));
-				swap = false;
-			}
+			</script>
+		<style>
+		a{
+		    font-weight: normal;
+		    font-style: normal;
+		}
+		a:link {
+		  text-decoration: none;
+		  font-size:30pt;
+		}
+		a:link {
+		  color: #FFD545;
 		}
 
-		function swapNodes(node1, node2)
-		{
-    		node2_copy = node2.cloneNode(true);
-    		node1.parentNode.insertBefore(node2_copy, node1);
-    		node2.parentNode.insertBefore(node1, node2);
-    		node2.parentNode.replaceChild(node2, node2_copy);
+		a:visited {
+		  color: #FFD545;
 		}
-	</script>
-</body>
-</html>"}
-*/
-client/var/tmp/interface/tmpInterface
 
-hudobj
+		a:hover {
+		  color: #8F1226;
+		}
+
+		a:active {
+		  color: #FFD545;
+		img{
+			z-index: -1;
+		}
+		</style>
+	</head>
+	<body>
+	<center>
+	<div style="position:absolute;bottom:5%;left:10%">
+	<a href='?src=\ref[src];action=loginNew'>New</a>
+	</div>
+	<div style="position:absolute;bottom:5%;right:15%">
+	<a href='?src=\ref[src];action=loginLoad'>Load</a>
+	</div>
+
+	<img src="http://51.195.202.176/resources/Header3.png" style="width:100%;height:100%;position:absolute;left:0px;top:0px;" />
+	</body>
+	</html>"}
+
+obj
 	login
-		anchor_x = "CENTER"
-		anchor_y = "CENTER"
-
-		mouse_opacity = 2
-
-		icon = 'Login Stone.dmi'
-		icon_state = "moss"
-
-		MouseEntered()
-			transform *= 1.25
-		MouseExited()
-			transform = null
-
-
-		Load
-			maptext = "<b><span style=\"font-size:14px;color:#34d\">Load</span></b>"
-			maptext_width = 64
-			maptext_x = 9
-			maptext_y = 4
-
-			screen_x = 64
-
+		plane=50
+		NEWBUTTON
+			icon='New.dmi'
+			name="New"
+			screen_loc = "CENTER-4,CENTER-6"
 			Click()
-				if(istype(usr,/mob/BaseCamp/ChoosingCharacter))
-					usr.client.glide_size = GLIDE_SIZE
-					usr:Choose_Character()
-
-		New
-			maptext = "<b><span style=\"font-size:14px;color:#34d\">New</span></b>"
-			maptext_width = 64
-			maptext_x = 10
-			maptext_y = 4
-
-			screen_x = -94
-
+				var/mob/BaseCamp/ChoosingCharacter/a = usr
+				a.New_Character()
+		LOADBUTTON
+			icon='Load.dmi'
+			name="Load"
+			screen_loc = "CENTER+5,CENTER-6"
 			Click()
-				if(istype(usr,/mob/BaseCamp/ChoosingCharacter))
-					usr.client.glide_size = GLIDE_SIZE
-					usr:New_Character()
+				var/mob/BaseCamp/ChoosingCharacter/a = usr
+				a.Choose_Character()
+		LoginTitle
+			icon='hp.dmi'
+			name="Harry Potter"
+			screen_loc = "CENTER-4,CENTER+2"
+mob/tmpmob
 
-obj/loginCamera
-	mouse_opacity = 0
-	invisibility = 10
-	glide_size = 8
+/*
 
-	New()
-		..()
-		tag = "loginCamera"
-		wander()
+			followers -= o
 
-	proc/wander()
-		set waitfor = 0
-		var/turf/target
-		while(src)
-			if(!target || loc == target)
-				target = locate(rand(50,70), rand(25,75), z)
-
-			var/turf/t = get_step_towards(loc, target)
-			if(t)
-				loc = t
-			else
-				target = null
-			sleep(4)
+			if(!followers.len)
+				followers = null
+*/
 
 mob/BaseCamp/ChoosingCharacter
-	sight = SEE_THRU
+	movable=1
 	Login()
-		reportDiscordWho = 1
-		new /hudobj/login/New(null, client, null, 1)
-		new /hudobj/login/Load(null, client, null, 1)
+		src.client.view="40x40"
+	//	src<< browse(HTMLOutput(src),"window=mainwindow.LoginBro")
+		//html login
 
-		client.tmpInterface = new (client)
-		client.onResize(60, 31, 0, 0, 1)
+		winset(src, "mainwindow.mainvsplit", "splitter=100")
+		winset(src, "mainwindow.mainvsplit", "show-splitter=false;")
+		winset(src,"mainwindow.LoginBro","is-visible=true")
+		src<< browse(HTMLOutput(src),"window=mainwindow.LoginBro")
 
-		var/obj/o = locate("loginCamera")
-		client.eye = o
+
+	// camera login
+		/*
+		var/obj/o = locate("World Camera")
+		client.eye=o
 		client.perspective = EYE_PERSPECTIVE
-		client.glide_size = 8
-
-	//	usr << output(HTMLOutput(src),"broLogin")
-		/*var/first_initial = copytext(ckey, 1, 2)
-		if(fexists("players/[first_initial]/[ckey].sav"))
-			var/mob/tmpmob/A
-			var/mob/tmpmob/M = new()
-			var/savefile/S = new("players/[first_initial]/[ckey].sav")
-			S.cd = "/players/[ckey]/mobs/"
-			var/firstentry
-			for (var/entry in S)
-				S["[entry]/mob"] >> M
-				//M = S["[entry]/mob"]The nurse orbs out
-				break
-			//alert("An old savefile is detected and needs to be converted into a new email-based savefile. The detected character is named \"[M.name]\" and is level [M.level].")
-			usr << output(HTMLOutput(src,"login"),"broLogin")*/
-	//	winset(src,null,"guild.is-visible=false;splitStack.is-visible=false;SpellBook.is-visible=false;Quests.is-visible=false;Auction.is-visible=false;winSettings.is-visible=false;broLogin.is-visible=true;radio_enabled.is-checked=false;barHP.is-visible=false;barMP.is-visible=false;[radioEnabled ? "mnu_radio.is-disabled=false;" : ""]")
-
-
+		winset(src,null,"mapwindow.on-size=\".resizeMap\";winSettings.is-visible=false;broLogin.is-visible=false;barHP.is-visible=false;barMP.is-visible=false;rpane.is-visible=false;")
+		winset(src, "mainwindow.mainvsplit", "splitter=100")
+		winset(src, "mainwindow.mainvsplit", "show-splitter=false;")
+		var/obj/login/NEWBUTTON/b = new()
+		var/obj/login/LOADBUTTON/l = new()
+		var/obj/login/LoginTitle/LTT = new()
+		src.client.screen+=LTT
+		src.client.screen+=b
+		src.client.screen+=l
+		winset(src,"mainwindow.LoginBro","is-visible=false")
+		*/
+		..()
 
 	proc/Choose_Character()
 		var/list/available_char_names=client.base_CharacterNames()
 		if(length(available_char_names) < 1)
 			src<<errormsg("You don't have a character to load, forwarding to creation process.")
+			src.sight=1
 			client.base_NewMob()
 			del(src)
 			return
 		else
+			client.screen=null
+			winset(src,null,"rpane.is-visible=true;")
+			winset(src, "mainwindow.mainvsplit", "splitter=80;")
+			winset(src, "mainwindow.mainvsplit", "show-splitter=true;")
+			src.client.perspective = MOB_PERSPECTIVE
+			src.client.eye=src
 			client.base_LoadMob(available_char_names[1])
 			del(src)
 			return
 	proc/New_Character()
+		src.sight=1
 		var/list/names=client.base_CharacterNames()
 		if(length(names) < client.base_num_characters_allowed)
+			client.screen=null
+			winset(src,null,"rpane.is-visible=true;")
+			winset(src, "mainwindow.mainvsplit", "splitter=80;")
+			winset(src, "mainwindow.mainvsplit", "show-splitter=true;")
+			src.client.perspective = MOB_PERSPECTIVE
+			src.client.eye=src
+			winset(src, null, "rpanewindow.left=infowindow")
 			client.base_NewMob()
+			src.sight=0
 			del(src)
 			return
 		else
 			switch(input(src,"You have the maximum amount of allowed characters. Delete one?") in list ("Yes","No"))
 				if("Yes")
 					DeleteCharacter()
+					usr.sight=0
 					return
 				if("No")
+					usr.sight=0
 					return
 	proc/ChooseCharacter()
 		var/list/available_char_names = client.base_CharacterNames()
@@ -787,61 +601,45 @@ mob/BaseCamp/ChoosingCharacter
 				return
 
 		client.base_DeleteMob(result)
+		sight=0
 		return
 
-mob/Player/var/base_save_verbs = 1
+var/list/mob/fakeDEs = list()
+proc/cleanup_fakeDE(loggedoutKey)
+	for(var/mob/fakeDE/d in fakeDEs)
+		if(d.ownerkey == loggedoutKey)
+			del d
 
 client
 	var/tmp/savefile/_base_player_savefile
 
-//	New()
-//		..()
-//		if (base_autoload_character)
-//			base_ChooseCharacter()
-//			base_Initialize()
-
+	New()
+		.=..()
+		if (base_autoload_character)
+			base_ChooseCharacter()
+			base_Initialize()
+			return
+		return ..()
 
 	Del()
-		reportDiscordWho = 1
 		if(mob && isplayer(mob))
-			mob:playedtime += world.realtime  - mob:timelog
 			if(mob:isTrading())
 				mob:trade.Clean()
-			if(mob:party)
-				mob:party.remove(mob)
-			if(mob:buildItemDisplay)
-				mob:buildItemDisplay.loc = null
-			mob:auctionClosed()
 			var/StatusEffect/S = mob.findStatusEffect(/StatusEffect/Lamps)
 			if(S) S.Deactivate()
-			if(mob:prevname)
-				mob.name = mob:prevname
-			if(mob.xp4referer)
-				sql_upload_refererxp(mob.ckey,mob.refererckey,mob.xp4referer)
-				mob.xp4referer = 0
+			if(mob.derobe)
+				mob.derobe = 0
+				mob.name = mob.prevname
+			mob.occlumens = 0
 			if(!mob.Gm)
 				mob.Check_Death_Drop()
-			if(mob:followers)
-				mob.pixel_y = 0
-				for(var/obj/o in mob:followers)
-					o.Dispose()
-				mob:followers = null
-			if(mob:pet)
-				mob:pet.Dispose()
-				mob:pet = null
-			var/obj/buildable/hammer_totem/o = locate("pet_[ckey]")
-			if(o)
-				o.cleanPets()
-			if(mob:readbooks > 0)
-				var/amount = mob:readbooks - 1
-				if(amount)
-					var/gold/g = new (bronze=amount)
-					g.give(mob)
+			cleanup_fakeDE(key)
 		if (base_autosave_character)
 			base_SaveMob()
-		if (base_autodelete_mob && mob)
+		if (base_autodelete_mob)
 			del(mob)
-		..()
+		return ..()
+
 
 
 	proc/base_PlayerSavefile()
@@ -861,6 +659,7 @@ client
 
 
 	proc/base_ChooseCharacter()
+		base_SaveMob()
 
 		var/mob/BaseCamp/ChoosingCharacter/chooser
 
@@ -910,21 +709,18 @@ client
 
 
 	proc/base_SaveMob()
-		if (!mob || !mob.base_save_allowed || !mob.save_loaded)
+		if (!mob || !mob.base_save_allowed)
 			return
 
-		if (mob:base_save_verbs)
-			mob:base_saved_verbs = mob.verbs - (typesof(/mob/Player/verb)) - (typesof(/mob/verb))
-
+		if (base_save_verbs)
+			mob.base_saved_verbs = mob.verbs
 		var/first_initial = copytext(ckey, 1, 2)
 		fdel("players/[first_initial]/[ckey].sav")
 		var/savefile/F = base_PlayerSavefile()
 		var/wasDE = 0
-		var/maskedName
-		if(mob:prevname)
-			maskedName = mob.name
+		if(mob.name == "Deatheater" && mob.prevname)
 			wasDE = 1
-			mob.name = mob:prevname
+			mob.name = mob.prevname
 		var/mob_ckey = ckey(mob.name)
 
 		var/directory = "/players/[ckey]/mobs/[mob_ckey]"
@@ -933,10 +729,8 @@ client
 
 		F["name"] << mob.name
 		F["mob"] << mob
-
-		mob.base_saved_verbs = null
 		if(wasDE)
-			mob.name = maskedName
+			mob.name = "Deatheater"
 		_base_player_savefile = null
 
 
@@ -965,13 +759,13 @@ client
 			else if(error && !new_mob.name)
 				new_mob.name = "RenameMe"
 
-			if (new_mob:base_save_verbs && new_mob.base_saved_verbs)
-				if(!new_mob.base_saved_verbs.len) return null
-				new_mob.verbs += new_mob.base_saved_verbs
-				new_mob.base_saved_verbs = null
-
 			mob = new_mob
 
+			new_mob.base_InitFromSavefile()
+			if (base_save_verbs && new_mob.base_saved_verbs)
+				if(!new_mob.base_saved_verbs.len) return null
+				for (var/item in new_mob.base_saved_verbs)
+					new_mob.verbs += item
 			return new_mob
 		return null
 

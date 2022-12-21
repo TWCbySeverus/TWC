@@ -1,16 +1,28 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
 var/list/spellList = list(
-	/mob/Spells/verb/Lumos = "Lumos",
+//	/mob/Spells/verb/Cugeo = "Cugeo",
 	/mob/Spells/verb/Petreficus_Totalus = "Petrificus Totalus",
 	/mob/Spells/verb/Scurries = "Scurries",
+	/mob/Spells/verb/Conjunctivis = "Conjunctivis",
 	/mob/Spells/verb/Portus = "Portus",
+	/mob/Spells/verb/Expecto_Patronum = "Expecto Patronum",
+	/mob/Spells/verb/Rictusempra = "Rictusempra",
+	/mob/Spells/verb/Dementia = "Dementia",
 	/mob/Spells/verb/Deletrius = "Deletrius",
+	/mob/Spells/verb/Evanesco = "Evanesco",
+	/mob/Spells/verb/Crucio = "Crucio",
 	/mob/Spells/verb/Serpensortia = "Serpensortia",
 	/mob/Spells/verb/Accio = "Accio",
-	/mob/Spells/verb/Accio_Maxima = "Accio Maxima",
+	///mob/Spells/verb/Herbificus_Maxima = "Herbificus Maxima",
 	/mob/Spells/verb/Reparo = "Reparo",
 	/mob/Spells/verb/Herbificus = "Herbificus",
-	/mob/Spells/verb/Herbivicus = "Herbivicus",
 	/mob/Spells/verb/Bombarda = "Bombarda",
+	/mob/Spells/verb/Eparo_Evanesca = "Eparo Evanesca",
 	/mob/Spells/verb/Carrotosi = "Carrotosi",
 	/mob/Spells/verb/Flippendo = "Flippendo",
 	/mob/Spells/verb/Langlock = "Langlock",
@@ -29,6 +41,7 @@ var/list/spellList = list(
 	/mob/Spells/verb/Chaotica = "Chaotica",
 	/mob/Spells/verb/Valorus = "Valorus",
 	/mob/Spells/verb/Inflamari = "Inflamari",
+	/mob/Spells/verb/Immobulus = "Immobulus",
 	/mob/Spells/verb/Ribbitous = "Ribbitous",
 	/mob/Spells/verb/Avis = "Avis",
 	/mob/Spells/verb/Reducto = "Reducto",
@@ -37,9 +50,11 @@ var/list/spellList = list(
 	/mob/Spells/verb/Self_To_Skeleton = "Personio Sceletus",
 	/mob/Spells/verb/Self_To_Mushroom = "Personio Musashi",
 	/mob/Spells/verb/Anapneo = "Anapneo",
+	/mob/Spells/verb/Melofors = "Melofors",
 	/mob/Spells/verb/Aqua_Eructo = "Aqua Eructo",
 	/mob/Spells/verb/Self_To_Human = "Personio Humaium",
 	/mob/Spells/verb/Other_To_Human = "Transfiguro Revertio",
+	/mob/Spells/verb/Levicorpus = "Levicorpus",
 	/mob/Spells/verb/Depulso = "Depulso",
 	/mob/Spells/verb/Occlumency = "Occlumency",
 	/mob/Spells/verb/Flagrate = "Flagrate",
@@ -48,6 +63,7 @@ var/list/spellList = list(
 	/mob/Spells/verb/Felinious = "Felinious",
 	/mob/Spells/verb/Permoveo = "Permoveo",
 	/mob/Spells/verb/Reddikulus = "Riddikulus",
+	/mob/Spells/verb/Densuago = "Densaugeo",
 	/mob/Spells/verb/Replacio = "Replacio",
 	/mob/Spells/verb/Incarcerous = "Incarcerous",
 	/mob/Spells/verb/Peskipixie_Pesternomae = "Peskipiksi Pestermi",
@@ -56,97 +72,54 @@ var/list/spellList = list(
 	/mob/Spells/verb/Ferula = "Ferula",
 	/mob/Spells/verb/Waddiwasi = "Waddiwasi",
 	/mob/Spells/verb/Tarantallegra = "Tarantallegra",
+	/mob/Spells/verb/Solidus = "Solidus",
+	/mob/Spells/verb/Arania_Eximae = "Arania Exumai",
 	/mob/Spells/verb/Sense = "Sense",
 	/mob/Spells/verb/Nightus = "Nightus",
 	/mob/Spells/verb/Harvesto = "Harvesto",
 	/mob/Spells/verb/Scan = "Scan",
+	/mob/Spells/verb/Furnunculus = "Furnunculus",
 	/mob/Spells/verb/Expelliarmus = "Expelliarmus",
 	/mob/Spells/verb/Eat_Slugs = "Eat Slugs",
 	/mob/Spells/verb/Disperse = "Disperse",
 	/mob/Spells/verb/Wingardium_Leviosa = "Wingardium Leviosa",
-	/mob/Spells/verb/Antifigura = "Antifigura")
-
+	/mob/Spells/verb/Antifigura = "Antifigura",
+	/mob/Spells/verb/Anteoculatia = "Anteoculatia")
 proc/name2spellpath(name)
 	for(var/V in spellList)
 		if(spellList[V] == name)
 			return V
 	world.log << "Was unable to find a spellpath in proc/name2spellpath with name=[name]"
 
-mob/Spells/verb/Accio(obj/M in oview(15,usr))
+mob/Spells/verb/Accio(obj/M in oview(usr.client.view,usr))
 	set category = "Spells"
-	set waitfor = 0
 	if(canUse(src,cooldown=null,needwand=0,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
-
-		if(!M.accioable && M.owner != usr.ckey)
-			src << errormsg("This object cannot be moved.")
-			return
-
+		if(!M.accioable){src<<"<b><font color=red>Error:</b></font> This object cannot be teleported.";return}
 		hearers(usr.client.view,usr)<< " <b>[usr]:<i><font color=aqua> Accio [M.name]!</i>"
-		usr:learnSpell("Accio")
-
-		var/turf/dest = locate(x, y-1, z)
-		if(!dest) dest = loc
-		var/turf/origLoc = M.loc
-		var/turf/t = M.loc
-
-		while(M.loc == t && t != dest)
-			t = get_step_towards(M, dest)
-			if(!t) break
-			M.loc = t
-			sleep(2)
-
-		if(!istype(M,/obj/items))
-			M.backToPos(origLoc)
-
-mob/Spells/verb/Accio_Maxima()
-	set category = "Spells"
-	set waitfor = 0
-	if(canUse(src,cooldown=/StatusEffect/UsedAccio,needwand=0,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
-		var/mob/Player/p = src
-		new /StatusEffect/Summoned(src,10*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-		hearers(client.view, p)<< " <b>[p]:<i><font color=aqua> Accio Maxima!</i>"
-		p.learnSpell("Accio Maxima")
-
-		for(var/obj/items/i in orange(10, p))
-			if(!i.accioable && i.owner != ckey) continue
-			i.walkTo(src, 1)
-
-
-
-obj/items/proc/walkTo(atom/movable/a, pickup=0)
-	set waitfor = 0
-	while(a && loc && a.loc && a.loc != loc)
-		loc = get_step_towards(src, a.loc)
-		sleep(1)
-	if(pickup && fetchable)
-		owner = null
-		if(antiTheft)
-			antiTheft = 0
-			filters = null
-		Move(a)
-
+		sleep(23)
+		flick('summon.dmi',M)
+		if(M in oview(usr.client.view,usr))
+			usr:learnSpell("Accio")
+			M.x = src:x
+			M.y = src:y-1
+			M.z = src:z
+			flick('summon.dmi',M)
+		else
+			usr << "The object is no longer in your view."
 
 mob/Spells/verb/Eat_Slugs(var/n as text)
 	set category = "Spells"
 	set hidden = 1
 	if(IsInputOpen(src, "Eat Slugs"))
 		del _input["Eat Slugs"]
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Eat Slugs"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
+	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=100,againstocclumens=1))
 		var/list/people = ohearers(client.view)&Players
-		var/mob/Player/M
+		var/mob/M
+
 		if(n)
-			for(var/mob/Player/i in people)
-				if(findtext(n, i.name) && length(i.name) + 2 >= length(n))
-					M = i
+			for(var/mob/Player/p in people)
+				if(findtext(n, p.name) && length(p.name) + 2 >= length(n))
+					M = p
 					break
 		if(!M && people.len)
 			var/Input/popup = new (src, "Eat Slugs")
@@ -154,22 +127,21 @@ mob/Spells/verb/Eat_Slugs(var/n as text)
 			del popup
 		if(!M) return
 		if(!(M in ohearers(client.view))) return
-		new /StatusEffect/Summoned(src,10*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-		p.MP = max(p.MP - mpCost, 0)
-		p.updateMP()
-		if(p.prevname)
-			hearers() << "<span style=\"font-size:2;\"><font color=red><b><font color=red>[usr]</span></b> :<font color=white> Eat Slugs, [M.name]!"
+		new /StatusEffect/Summoned(src,15)
+		MP = max(MP - 100, 0)
+		if(derobe)
+			hearers() << "<font size=2><font color=red><b><font color=red> [usr]</font></b> :<font color=white> Eat Slugs, [M.name]!"
 		else
-			hearers() << "<span style=\"font-size:2;\"><font color=red><b>[p.Tag]<font color=red>[usr]</span> [p.GMTag]</b>:<font color=white> Eat Slugs, [M.name]!"
+			hearers() << "<font size=2><font color=red><b>[Tag] <font color=red>[usr]</font> [GMTag]</b>:<font color=white> Eat Slugs, [M.name]!"
 
 		M << errormsg("[usr] has casted the slug vomiting curse on you.")
-		p.learnSpell(spellName)
+		usr:learnSpell("Eat Slugs")
 		src=null
 		spawn()
 			var/slugs = rand(4,12)
 			while(M && slugs > 0 && M.MP > 0)
 				M.MP -= rand(20,60) * round(M.level/100)
-				new/mob/Enemies/Summoned/Slug(M.loc)
+				new/mob/Slug(M.loc)
 				if(M.MP < 0)
 					M.MP = 0
 					M.updateMP()
@@ -184,96 +156,65 @@ mob/Spells/verb/Eat_Slugs(var/n as text)
 mob/Spells/verb/Disperse()
 	set category = "Spells"
 	set hidden = 1
-
 	if(canUse(src,cooldown=/StatusEffect/UsedDisperse,needwand=0,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
-		new /StatusEffect/UsedDisperse(src,10*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
+		new /StatusEffect/UsedDisperse(src,10)
 		usr:learnSpell("Disperse")
-		for(var/obj/smokeeffect/S in oview(client.view))
+		for(var/obj/smokeeffect/S in view(client.view))
 			del(S)
-		for(var/turf/T in oview())
-			if(T.specialtype & SWAMP)
-				T.slow -= 1
-				T.specialtype -= SWAMP
-				var/image/i = image('Effects.dmi',icon_state = "m-black",layer=10)
-				T.overlays += i
-				var/list/decor = list()
-				for(var/obj/o in T)
-					if(o.name == "swamp")
-						decor += o
-						animate(o, alpha = 0, time = 8)
-
+		for(var/turf/T in view())
+			if(T.specialtype == "Swamp")
+				T.slow -= 5
+				T.specialtype = null
+				T.overlays += image('mist.dmi',layer=10)
 				spawn(9)
-					T.overlays -= i
-
-					for(var/obj/o in decor)
-						o.loc = null
-		src = null
-
+					T.overlays = null
+		for(var/obj/The_Dark_Mark/dm in view())
+			dm.counter(src)
+		if(src.Gm)
+			for(var/turf/T in view(client.view))
+				if(length(T.overlays))
+					T.overlays += image('mist.dmi',layer=10)
+					spawn(9)
+					T.overlays = null
+					T.density=initial(T.density)
 mob/Spells/verb/Herbificus()
 	set category = "Spells"
-	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,antiTeleport=1))
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
 		var/obj/redroses/p = new
 		p:loc = locate(src.x,src.y-1,src.z)
-		p.FlickState("Orb",12,'Effects.dmi')
+		flick('herbsummon.dmi',p)
 		p:owner = "[usr.key]"
-		if(!findStatusEffect(/StatusEffect/SpellText))
-			new /StatusEffect/SpellText(src,5)
-			hearers()<<"<b><span style=\"color:red;\">[usr]:</span> Herbificus."
-			usr:learnSpell("Herbificus")
-
-mob/Spells/verb/Herbivicus()
-	set category = "Spells"
-	if(canUse(src,needwand=1,insafezone=1,inhogwarts=1))
-		hearers()<<"<b><span style=\"color:red;\">[usr]:</span> Herbivicus."
-
-		for(var/obj/herb/h in oview(15, src))
-			if(h.wait) continue
-
-			var/image/i = image('attacks.dmi',icon_state="heal")
-			h.overlays += i
-			sleep(10)
-			h.overlays -= i
-
-			if(h.lastUsed)
-				if(h.water == 1)
-					h.water = 2
-				else if(h.water == -1)
-					h.water = 0
-				else if(h.water == 2 && world.realtime - h.lastUsed >= h.delay*0.75)
-					h.grow(src)
-			else
-				h.grow(src)
-
-		usr:learnSpell("Herbivicus")
-
+		hearers()<<"<b><Font color=red>[usr]:</font> Herbificus."
+		usr:learnSpell("Herbificus")
+		if(p.loc.loc.type in typesof(/area/newareas/inside/Rotem_Mansion/))
+			sleep(30)
+			del p
+			usr<<"The roses instantly die due to the sheer stench of the mansion."
 mob/Spells/verb/Protego()
 	set category = "Spells"
-	var/mob/Player/p = src
-
-	var/mpCost = 100
-	var/spellName = "Protego"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(!p.reflect)
-		if(canUse(src,cooldown=/StatusEffect/UsedProtego,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-			new /StatusEffect/UsedProtego(src,40*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier,"Protego")
-			p.overlays += /obj/Shield
-			hearers()<< "<b><span style=\"color:red;\">[usr]</b></span>: PROTEGO!"
-			p << "You shield yourself magically"
-			p.reflect = 0.5
-			p.learnSpell(spellName)
-			p.MP -= mpCost
-			p.updateMP()
-			sleep(30)
-			if(p.reflect)
-				p.reflect = 0
-				p.overlays -= /obj/Shield
-				p<<"You are no longer shielded!"
-
-mob/Spells/verb/Valorus(mob/Player/M in view())
+	if(!usr.shielded)
+		if(canUse(src,cooldown=/StatusEffect/UsedProtego,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+			new /StatusEffect/UsedProtego(src,10)
+			usr.overlays += /obj/Shield
+			hearers()<< "<b><font color=red>[usr]</b></font>: PROTEGO!"
+			usr << "You shield yourself magically"
+			usr.shielded = 1
+			usr.shieldamount = (usr.Def+usr.extraDef) * 2.5
+			usr:learnSpell("Protego")
+			sleep(100)
+			if(usr.shielded==1)
+				usr.shielded = 0
+				usr.shieldamount = 0
+				usr.overlays -= /obj/Shield
+				usr<<"You are no longer shielded!"
+			else return
+	else
+		if(shielded)
+			usr.shielded = 0
+			usr.shieldamount = 0
+			usr << "You are no longer shielded!"
+		usr.overlays -= /obj/Shield
+mob/Spells/verb/Valorus(mob/Player/M in view()&Players)
 	set category="Spells"
 	var/mob/Player/user = usr
 	if(locate(/obj/items/wearable/wands) in user.Lwearing)
@@ -281,43 +222,37 @@ mob/Spells/verb/Valorus(mob/Player/M in view())
 		hearers() << "[usr] flicks \his wand towards [M]"
 		usr:learnSpell("Valorus")
 		if(M.flying)
-			var/obj/items/wearable/brooms/B = locate() in M.Lwearing
-			if(B)
-				B.protection--
-				if(B.protection <= 0)
-					B.Equip(M,1)
+			for(var/obj/items/wearable/brooms/B in M.Lwearing)
+				B.Equip(M,1)
 				//M.flying=0
 				//M.icon_state=""
 				//M.density=1
-					hearers()<<"[M] is knocked off \his broom!"
-					new /StatusEffect/Knockedfrombroom(M, max(1, 16 - B.protection*2))
+				hearers()<<"[M] is knocked off \his broom!"
+				new /StatusEffect/Knockedfrombroom(M,15)
 	else
 		usr << "You must hold a wand to cast this spell."
 mob/Spells/verb/Depulso()
 	set category="Spells"
-
+	var/mob/M
 	var/found = FALSE
-	for(var/mob/Player/M in get_step(usr,usr.dir))
-		if(!M.findStatusEffect(/StatusEffect/Potions/Stone))
-			var/turf/t = get_step_away(M,usr,15)
-			if(!t || (issafezone(M.loc.loc, 0) && !issafezone(t.loc, 0))) return
-			M.Move(t)
+	for(M in get_step(usr,usr.dir))
+		if(!M.key && !istype(M,/mob/Victims)) return
+		var/turf/t = get_step_away(M,usr,15)
+		if(!t || (issafezone(M.loc.loc) && !issafezone(t.loc))) return
+		M.Move(t)
 
-		if(!findStatusEffect(/StatusEffect/SpellText))
-			new /StatusEffect/SpellText(src,5)
-			hearers()<<"<b><span style=\"color:red;\">[usr]:</span></b> Depulso!"
+		if(!findStatusEffect(/StatusEffect/DepulsoText))
+			new /StatusEffect/DepulsoText(src,5)
+			hearers()<<"<b><font color=red>[usr]:</font></b> Depulso!"
 
 		if(isplayer(M))
 			found = TRUE
 			M<<"You were pushed backwards by [usr]'s Depulso Charm."
 			if(M.flying)
-				var/obj/items/wearable/brooms/B = locate() in M.Lwearing
-				if(B)
-					B.protection--
-					if(B.protection <= 0)
-						B.Equip(M,1)
-						hearers()<<"[usr]'s Depulso knocked [M] off \his broom!"
-						new /StatusEffect/Knockedfrombroom(M, max(1, 16 - B.protection*2))
+				for(var/obj/items/wearable/brooms/B in M:Lwearing)
+					B.Equip(M,1)
+					hearers()<<"[usr]'s Depulso knocked [M] off \his broom!"
+					new /StatusEffect/Knockedfrombroom(M,15)
 	if(found)
 		usr:learnSpell("Depulso")
 
@@ -328,64 +263,39 @@ mob/Spells/verb/Deletrius()
 		usr:learnSpell("Deletrius")
 		for(var/obj/redroses/S in oview(usr.client.view,usr))
 			if(!S.GM_Made || (S.GM_Made && usr.Gm))
-				S.FlickState("Orb",12,'Effects.dmi')
-				S.Dispose()
+				flick('Deletrius.dmi',S)
+				del S
 		hearers(usr.client.view,usr)<<"[usr] flicks \his wand, causing the roses to dissolve into the air."
 	else
 		usr << errormsg("This spell requires a wand.")
-mob/Spells/verb/Expelliarmus(mob/Player/M in view())
+mob/Spells/verb/Expelliarmus(mob/M in view()&Players)
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 300
-	var/spellName = "Expelliarmus"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=mpCost,againstocclumens=1))
+	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
 		var/obj/items/wearable/wands/W = locate(/obj/items/wearable/wands) in M:Lwearing
 		if(W)
 			W.Equip(M,1)
-			hearers()<<"<span style=\"color:red;\"><b>[usr]</b></span>: <font color=white>Expelliarmus!"
+			hearers()<<"<font color=red><b>[usr]</b></font>: <font color=white>Expelliarmus!"
 			hearers()<<"<b>[M] loses \his wand.</b>"
-			new /StatusEffect/UsedAnnoying(src,30*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-
-			p.MP -= mpCost
-			p.updateMP()
-
-			p.learnSpell(spellName)
-			M.nowand()
+			new /StatusEffect/UsedAnnoying(src,15)
+			usr:learnSpell("Expelliarmus")
+			if(M.removeoMob)
+				M << "Your Permoveo spell failed.."
+				M.client.eye=M
+				M.client.perspective=MOB_PERSPECTIVE
+				M.removeoMob:ReturnToStart()
+				M.removeoMob:removeoMob = null
+				M.removeoMob = null
 		else
 			usr << "[M] doesn't have \his wand drawn."
-
-mob/Player/proc/nowand()
-	if(client.eye != src && Interface.SetDarknessColor(TELENDEVOUR_COLOR))
-		src << "Your Telendevour wears off."
-		client.eye = src
-		client.perspective = EYE_PERSPECTIVE
-
-	if(removeoMob)
-		src << "Your Permoveo spell failed.."
-		client.eye = src
-		client.perspective = MOB_PERSPECTIVE
-		removeoMob:ReturnToStart()
-		removeoMob:removeoMob = null
-		removeoMob = null
-	else if(Wingardiumleviosa)
-		src << "You let go of the object you were holding."
-		wingobject = null
-		Wingardiumleviosa = null
-
 mob/Spells/verb/Eparo_Evanesca()
 	set category="Spells"
 	if(canUse(src,cooldown=/StatusEffect/UsedEvanesca,needwand=1,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedEvanesca(src,10*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
+		new /StatusEffect/UsedEvanesca(src,10)
 		hearers()<<"<b><font color=red>[usr] <font color=blue> Eparo Evanesca!"
 		usr:learnSpell("Eparo Evanesca")
 		for(var/mob/Player/M in hearers())
 			if(M.key&&(M.invisibility==1))
+				flick('teleboom.dmi',M)
 				M.invisibility = 0
 				M.alpha = 255
 				var/obj/items/wearable/invisibility_cloak/C = locate(/obj/items/wearable/invisibility_cloak) in M.Lwearing
@@ -396,53 +306,65 @@ mob/Spells/verb/Eparo_Evanesca()
 					M.sight &= ~SEE_SELF
 					M.alpha = 255
 				M<<"You have been revealed!"
-				new /StatusEffect/Decloaked(M,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-
+				new /StatusEffect/Decloaked(M,15)
+mob/Spells/verb/Evanesco(mob/M in Players&oview())
+	set category="Spells"
+	if(canUse(src,cooldown=/StatusEffect/UsedEvanesco,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1,againstflying=0,againstcloaked=0))
+		new /StatusEffect/UsedEvanesco(src,15)
+		flick('teleboom.dmi',M)
+		M.invisibility=1
+		M.sight |= SEE_SELF
+		M.alpha = 125
+		hearers(usr.client.view,usr)<<"<b><font color=red>[usr]: <font color=blue>Evanesco!"
+		M<<"You have been hidden!"
+		usr:learnSpell("Evanesco")
 mob/Spells/verb/Imitatus(mob/M in view()&Players, T as text)
 	set category = "Spells"
-	var/mob/Player/p = src
-	if(p.mute==1){src<<"You cannot cast this spell while muted.";return}
-	hearers()<<"<span style=\"color:red;\">[p]:</span> Imitatus."
-	hearers() << "<span style=\"color:red;\"><b>[M]</b> : </span>[html_encode(T)]"
-	p.learnSpell("Imitatus")
-mob/Spells/verb/Morsmordre()
+	if(src.mute==1){src<<"You cannot cast this spell while muted.";return}
+	hearers()<<"</font><font color = #001E15>[usr]: Imitatus.</font>"
+	hearers() << " <b><font color = red>[M]</B> <font color = red>:</font> </font> [html_encode(T)]"
+	usr:learnSpell("Imitatus")
+mob/Spells/verb/Densuago(mob/M in view()&Players)
 	set category = "Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedClanAbilities,inarena=0, insafezone=0, needwand=1))
-		var/obj/The_Dark_Mark/D = locate("DarkMark")
-		if(D && D.loc)
-			src << errormsg("A dark mark already exists in the sky.")
-			return
-
-		new /StatusEffect/UsedClanAbilities(src, 600)
-		D = new (locate(src.x,src.y+1,src.z))
+	set name = "Densaugeo"
+	hearers()<<"<font color = red><b>[usr] </b></font>: <font color=white><b>Densaugeo [M]!"
+	sleep(20)
+	M.overlays+=('teeth.dmi')
+	hearers()<<"[M]'s teeth begin to grow rapidly!"
+	M<<"[src] placed a curse on you! Your teeth grew rapidly. They will return to normal in 3 minutes."
+	usr:learnSpell("Densuago")
+	src = null
+	spawn(1800)
+		if(M)
+			M.overlays-=('teeth.dmi')
+			M<<"Your teeth have been reduced to normal size."
+mob/Spells/verb/Morsmordre()
+	set category = "Clan"
+	if(canUse(src,cooldown=/StatusEffect/UsedClanAbilities, needwand=1))
+		new /StatusEffect/UsedClanAbilities(src,300)
+		var/obj/The_Dark_Mark/D = new /obj/The_Dark_Mark
+		D:loc = locate(src.x,src.y+1,src.z)
 		D.density=0
-		D.owner = ckey
-		D.FlickState("m-black",8,'Effects.dmi')
-		hearers() <<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=green>MORSMORDRE!"
+		flick('mist.dmi',D)
+		hearers() <<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=green>MORSMORDRE!"
 		Players<<"The sky darkens as a sneering skull appears in the clouds with a snake slithering from its mouth."
-
+		src = null
+		spawn(600)
+			if(D)
+				Players<<"The Dark Mark fades back into the clouds."
 mob/Spells/verb/Repellium()
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Repellium"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedRepel,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=white>Repellium!"
-		p.MP -= mpCost
-		p.updateMP()
+	if(canUse(src,cooldown=/StatusEffect/UsedRepel,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=100,againstocclumens=1))
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=white>Repellium!"
+		MP -= 100
+		updateMP()
 		light(src, 3, 300, "light")
-		p.learnSpell(spellName)
-		new /StatusEffect/UsedRepel(src, 90*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
+		usr:learnSpell("Repellium")
+		new /StatusEffect/UsedRepel(src, 90)
 		new /StatusEffect/DisableProjectiles(src, 30)
 		var/time = 75
 		while(time > 0)
-			for(var/mob/Enemies/D in ohearers(3, src))
+			for(var/mob/NPC/Enemies/D in ohearers(3, src))
 				step_away(D, src)
 			time--
 			sleep(4)
@@ -457,198 +379,67 @@ proc/light(atom/a, range=3, ticks=100, state = "light")
 		spawn(ticks)
 			if(a) a.underlays -= img
 
-mob/Spells/verb/Lumos()
-	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Lumos"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedLumos,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=white>Lumos!"
-		p.MP -= mpCost
-		p.updateMP()
-
-		p.learnSpell(spellName)
-		new /StatusEffect/UsedLumos(src, 60*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		var/obj/light/l = new(loc)
-
-		animate(l, transform = matrix() * (1.6 + tier / 10), time = 10, loop = -1)
-		animate(   transform = matrix() * (1.5 + tier / 10), time = 10)
-
-		p.addFollower(l)
-
-		src = null
-		spawn(600)
-			if(p && l)
-				p.removeFollower(l)
-				l.loc = null
-
-mob/Spells/verb/Lumos_Maxima()
-	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 300
-	var/spellName = "Lumos Maxima"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedLumos,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		hearers()<<"<b><span style=\"color:red;\">[p]</b></span>: <b><font size=3><font color=white>Lumos Maxima!"
-
-		new /StatusEffect/UsedLumos(src, 90*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		castproj(MPreq = mpCost, Type = /obj/projectile/Lumos, icon_state = "light", name = spellName, lag = 2)
-
-mob/Spells/verb/Aggravate()
-	set category = "Spells"
-	if(!loc) return
-
-	var/mob/Player/p = src
-	var/mpCost = 150
-	var/spellName = "Aggravate"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedAggro,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		hearers()<<"<b><span style=\"color:red;\">[p]</b></span>: <b><font size=3><font color=white>Aggravate!"
-		p.MP -= mpCost
-
-		new /StatusEffect/UsedAggro(src, 20*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		p.monsterDef += 10
-		p.HP = min(p.MHP, p.HP + 500)
-		p.updateHPMP()
-
-		p.learnSpell(spellName)
-
-	//	var/area/pArea = loc.loc
-		light(src, range=14, ticks=10, state = "red")
-		for(var/mob/Enemies/e in ohearers(14))
-		//	var/area/eArea = loc.loc
-
-		//	if(eArea != pArea) continue
-			if(e.state == 0)   continue
-
-			e.ChangeState(e.HOSTILE)
-			e.target = src
-
-		spawn(100)
-			p.monsterDef -= 10
-			p.HP = min(p.MHP, p.HP + 500)
-			p.updateHP()
-
 
 mob/Spells/verb/Basilio()
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 200
-	var/spellName = "Basilio"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=0,inhogwarts=0,target=null,mpreq=mpCost,againstocclumens=1))
-		if(p.summons + 1 >= 1 + p.extraLimit + round(p.Summoning.level / 10))
-			p << errormsg("You need higher summoning level to summon more.")
-			return
-
-		new /StatusEffect/Summoned(src,30*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		p.MP -= mpCost
-		p.updateMP()
-
-		p.learnSpell(spellName)
-
-		if(SWORD_SNAKE in p.passives)
-			hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=4><font color=#FF8C00> Basilio!"
-			var/obj/summon/akalla/s = new  (loc, src, "Basilio", 1, tier)
-			s.FlickState("m-black",8,'Effects.dmi')
-		else
-			hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=green> Basilio!"
-			var/obj/summon/basilisk/s = new  (loc, src, "Basilio", 0.5, tier)
-			s.FlickState("m-black",8,'Effects.dmi')
+	if(clanrobed())return
+	hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=green> Basilio!"
+	sleep(20)
+	hearers()<<"[usr]'s wand emits a bright flash of light."
+	sleep(20)
+	if(!src.loc.loc:safezoneoverride && (istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/hogwarts/Duel_Arenas) || istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/Diagon_Alley)))
+		src << "<b>You can't use this inside a safezone.</b>"
+		return
+	hearers()<<"A Black Basilisk, emerges from [usr]'s wand."
+	hearers()<<"<b>Basilisk</b>: Hissssssss!"
+	var/mob/NPC/Enemies/Summoned/Boss/Basilisk/D = new (locate(src.x,src.y-1,src.z))
+	flick('mist.dmi',D)
 
 mob/Spells/verb/Serpensortia()
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Serpensortia"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=0,inhogwarts=0,target=null,mpreq=mpCost,againstocclumens=1))
-		if(p.summons >= 1 + p.extraLimit + round(p.Summoning.level / 10))
-			p << errormsg("You need higher summoning level to summon more.")
+	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=0,inhogwarts=0,target=null,mpreq=0,againstocclumens=1))
+		new /StatusEffect/Summoned(src,15)
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=green> Serpensortia!"
+		sleep(20)
+		hearers()<<"[usr]'s wand emits a bright flash of light."
+		sleep(20)
+		if(!src.loc.loc:safezoneoverride && (istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/hogwarts/Duel_Arenas) || istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/Diagon_Alley)))
+			src << "<b>You can't use this inside a safezone.</b>"
 			return
-
-		new /StatusEffect/Summoned(src,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		p.MP -= mpCost
-		p.updateMP()
-
-		if(SWORD_SNAKE in p.passives)
-			hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=4 color=#FF8C00>Serpensortia!"
-			var/obj/summon/demon_snake/s = new  (loc, src, "Serpensortia", 1, tier)
-			s.FlickState("m-black",8,'Effects.dmi')
-		else
-			hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3 color=green>Serpensortia!"
-			var/obj/summon/snake/s = new  (loc, src, "Serpensortia", 0.5, tier)
-			s.FlickState("m-black",8,'Effects.dmi')
-
-		p.learnSpell(spellName)
-
+		hearers()<<"A Red-Spotted Green Snake, emerges from the wand."
+		hearers()<<"<b>Snake</b>: Hissssssss!"
+		var/mob/NPC/Enemies/Summoned/Snake/D = new (locate(src.x,src.y-1,src.z))
+		D.Ignore(src)
+		flick('MonsterSummon.dmi',D)
+		usr:learnSpell("Serpensortia")
+		src = null
+		spawn(600)
+			flick('mist.dmi',D)
+			if(D)
+				view(D)<<"The snake disappears."
+				Respawn(D)
 mob/Spells/verb/Herbificus_Maxima()
 	set category = "Spells"
-	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,antiTeleport=1))
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
 		var/obj/redroses/a = new
 		var/obj/redroses/b = new
 		var/obj/redroses/c = new
 		a.loc = get_step(usr,turn(usr.dir,-45))
 		b.loc = get_step(usr,usr.dir)
 		c.loc = get_step(usr,turn(usr.dir,45))
-		a.FlickState("Orb",12,'Effects.dmi')
-		b.FlickState("Orb",12,'Effects.dmi')
-		c.FlickState("Orb",12,'Effects.dmi')
+		flick('herbsummon.dmi',a)
+		flick('herbsummon.dmi',b)
+		flick('herbsummon.dmi',c)
 		a:owner = "[usr.key]"
 		b:owner = "[usr.key]"
 		c:owner = "[usr.key]"
-		if(!findStatusEffect(/StatusEffect/SpellText))
-			new /StatusEffect/SpellText(src,5)
-			hearers()<<"<b><span style=\"color:red;\">[usr]:</span> Herbificus MAXIMA!"
+		hearers()<<"<b><Font color=red>[usr]:</font> Herbificus MAXIMA!"
 mob/Spells/verb/Shelleh()
+	set hidden=55
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Shelleh"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedShelleh,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		new /StatusEffect/UsedShelleh(src,60*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		hearers()<<"<b><span style=\"color:red;\">[usr]:</span> <font color=white>Shelleh."
-
-		p.MP -= mpCost
-		p.updateMP()
-
-		p.learnSpell(spellName)
+	if(canUse(src,cooldown=/StatusEffect/UsedShelleh,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=50,againstocclumens=1))
+		new /StatusEffect/UsedShelleh(src,60)
+		hearers()<<"<b><font color=red>[usr]:</font> <BIG><font color=red>S<font color=blue>h<font color=yellow>e<font color=green>l<font color=aqua>l<font color=red>e<font color=blue>h.</font></BIG>"
 
 		for(var/turf/t in oview(rand(1,3)))
 			if(t.density) continue
@@ -657,113 +448,238 @@ mob/Spells/verb/Shelleh()
 			new /obj/egg (t)
 			sleep(1)
 
+mob/Spells/verb/Solidus()
+	set category = "Spells"
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		var/obj/stone/p = new /obj/stone
+		p:loc = locate(src.x,src.y-1,src.z)
+		flick('teleboom.dmi',p)
+		p:owner = "[usr.key]"
+		hearers()<<"<b><font color=red>[usr]:</font> <font color=green>Solidus."
+		usr:learnSpell("Solidus")
 mob/Spells/verb/Ferula()
 	set category = "Spells"
 	if(canUse(src,cooldown=/StatusEffect/UsedFerula,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
-		new /StatusEffect/UsedFerula(src, 60*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		var/obj/Madame_Pomfrey/p = new /obj/Madame_Pomfrey (loc, 500)
-
-		var/turf/t = locate(x,y+1,z)
-		if(t)
-			p.loc = t
-
-		p.FlickState("Orb",12,'Effects.dmi')
-		hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=aqua> Ferula!"
+		new /StatusEffect/UsedFerula(src,30)
+		var/obj/Madame_Pomfrey/p = new /obj/Madame_Pomfrey
+		p:loc = locate(src.x,src.y+1,src.z)
+		flick('teleboom.dmi',p)
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=aqua> Ferula!"
 		hearers()<<"[usr] has summoned Madame Pomfrey!"
 		usr:learnSpell("Ferula")
+		spawn()
+			src = null
+			sleep(10)
+			view(p)<<"<b>Madame Pomfrey</b>: Hello. Need healing? Click me."
+			sleep(400)
+			flick('dlo.dmi',p)
+			p.icon = null
+			sleep(10)
+			if(p)
+				view(p)<<"The nurse orbs out."
+obj/ExShield
+	icon='expecto.dmi'
+	icon_state="shield"
+	layer=7
+
+obj/patronus
+	icon='clear.dmi'
+	alpha=150
+	density=1
+	Bump(mob/M)
+		if(M.name=="Dementor")
+			var/mob/killer = src.owner
+			M.HP-=killer.level*2
+			step_away(M,src,10,1.5)
+			M.Death_Check(killer)
+		else
+			del src
+
+var/list/spirits = list('rabbitp.dmi','birdp.dmi','dogp.dmi','turkeyp.dmi','ppbit.dmi')
+mob/var/patronus_mode=1
+
+mob/var/focus_animal = 'patronus.dmi'
+
+
+mob/Spells/verb/Expecto_Patronum()
+	set category = "Spells"
+	if(canUse(src,cooldown=/StatusEffect/Patronus,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=100,againstocclumens=1))
+		usr:learnSpell("Expecto Patronum")
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=white>EXPECTO PATRONUM!"
+		if(src.patronus_mode==2)
+			var/obj/patronus/S=new/obj/patronus
+			var/obj/patronus/D=new/obj/patronus
+			var/obj/patronus/C=new/obj/patronus
+			S.icon = usr.focus_animal//pick(spirits)
+			if(usr.dir==1||usr.dir==2)
+				D.loc=locate(usr.x+1,usr.y,usr.z)
+				C.loc=locate(usr.x-1,usr.y,usr.z)
+			else
+				D.loc=locate(usr.x,usr.y+1,usr.z)
+				C.loc=locate(usr.x,usr.y-1,usr.z)
+			usr.MP-=100
+			usr.updateMP()
+			S.owner = usr
+			S.loc=(usr.loc)
+			walk(S,usr.dir,1.5)
+			walk(D,usr.dir,1.5)
+			walk(C,usr.dir,1.5)
+			sleep(20)
+			del S
+			del D
+			del C
+		else
+			new /StatusEffect/Patronus(src,30)
+			var/obj/ExShield/e = new()
+			usr.overlays+=e
+			usr.MP-=100
+			usr.updateMP()
+			sleep(300)
+			usr.overlays-=e
+	/*	sleep(20)
+		overlays += image('expecto.dmi')
+		for(var/mob/NPC/Enemies/Summoned/Dementor/D in view())
+			D.loc = locate(1,1,1)
+			spawn()	Respawn(D)
+		for(var/mob/NPC/Enemies/Dementor/D in view())
+			D.loc = locate(1,1,1)
+			spawn() Respawn(D)
+		overlays-=image('expecto.dmi')
+		hearers()<<"Bright white light shoots out of [usr]'s wand."
+		usr:learnSpell("Expecto Patronum")
+*/
+obj/algm
+	icon='Alocol.dmi'
+	density=1
+	Aloh
+		Bump(obj/Hogwarts_Door/D)
+			if(D.name=="Hogwarts Door")
+				if(src.owner.admin==1)
+					D.door=1
+					D.bumpable=1
+					D.gmlock=0
+					src.owner<<"<font color = yellow><i>You've unlocked the door.</i></font>"
+				else
+					if(D.gmlock==0)
+						D.door=1
+						D.bumpable=1
+						src.owner<<"<font color = yellow><i>You've unlocked the door.</i></font>"
+					else
+						del src
+				del src
+			else
+				del src
+	Col
+		icon_state="col"
+		Bump(obj/Hogwarts_Door/D)
+			if(D.name=="Hogwarts Door" && !D.pass && D.gmlock==0)
+				if(src.owner.admin==1)D.gmlock=1
+				D.door=0
+				D.bumpable=0
+				src.owner<<"<font color = yellow><i>You cause the door to magically lock.</font></i>"
+				if(src.owner.admin==0)
+					src.loc=locate(1,1,1)
+					sleep(1200)
+					D.door=1
+					D.bumpable=1
+				else
+					del src
+			else
+				del src
+
+obj/var/gmlock=0
+
+mob/Spells/verb/Alohomora()
+	set category = "Spells"
+	if(canUse(src,cooldown=/StatusEffect/aloh,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		var/obj/A = new/obj/algm/Aloh
+		if(usr.Gm==0) new /StatusEffect/aloh(src,1)
+		A.loc=(usr.loc)
+		A.owner=usr
+		walk(A,usr.dir,2)
+		sleep(20)
+		if(A)del A
+
+mob/Spells/verb/Colloportus()
+	set category = "Spells"
+	if(canUse(src,cooldown=/StatusEffect/col,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		var/obj/A = new/obj/algm/Col
+		if(usr.Gm==0) new /StatusEffect/col(src,1)
+		A.loc=(usr.loc)
+		A.owner=usr
+		walk(A,usr.dir,2)
+		sleep(20)
+		if(A)del A
 
 mob/Spells/verb/Avis()
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Avis"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		if(p.summons >= 1 + p.extraLimit + round(p.Summoning.level / 10))
-			p << errormsg("You need higher summoning level to summon more.")
-			return
-
-		new /StatusEffect/Summoned(src,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		p.MP -= mpCost
-		p.updateMP()
-
-		hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=yellow> Avis!"
+	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		new /StatusEffect/Summoned(src,15)
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=yellow> Avis!"
+		sleep(20)
+		hearers()<<"A bright white flash shoots out of [usr]'s wand."
+		sleep(20)
 		hearers()<<"A Phoenix emerges."
-		var/obj/summon/phoenix/s = new  (loc, src, "Avis", 0.5)
-		s.FlickState("m-black",8,'Effects.dmi')
-		p.learnSpell(spellName)
-
+		var/mob/NPC/Enemies/Summoned/Phoenix/D = new (locate(src.x,src.y+1,src.z))
+		flick('MonsterSummon.dmi',D)
+		usr:learnSpell("Avis")
+		src = null
+		spawn(600)
+			flick('mist.dmi',D)
+			if(D)
+				view(D)<<"The Phoenix flies away."
+				del D
+/*
 mob/Spells/verb/Crapus_Sticketh()
+	set hidden = 55
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Crapus Sticketh"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=0,inhogwarts=0,useTimedProtection=1,target=null,mpreq=mpCost,againstocclumens=1))
-		if(p.summons >= 1 + p.extraLimit + round(p.Summoning.level / 10))
-			p << errormsg("You need higher summoning level to summon more.")
+	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=0,inhogwarts=0,target=null,mpreq=0,againstocclumens=1))
+		new /StatusEffect/Summoned(src,15)
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=green> Crapus...Sticketh!!"
+		sleep(20)
+		hearers()<<"A flash of black light shoots from [usr]'s wand."
+		sleep(20)
+		if(!src.loc.loc:safezoneoverride && (istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/hogwarts/Duel_Arenas) || istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/Diagon_Alley)))
+			src << "<b>You can't use this inside a safezone.</b>"
 			return
-
-		new /StatusEffect/Summoned(src,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		p.MP -= mpCost
-		p.updateMP()
-
-		hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=green> Crapus...Sticketh!!"
 		hearers()<<"A stick figure appears."
-		var/obj/summon/stickman/s = new  (loc, src, "Crapus-Sticketh", 0.5)
-		s.FlickState("m-black",8,'Effects.dmi')
-
-		p.learnSpell(spellName)
-
+		var/mob/Stickman_/D = new /mob/Stickman_
+		D:loc = locate(src.x,src.y+1,src.z)
+		flick('mist.dmi',D)
+		src = null
+		spawn(600)
+			flick('mist.dmi',D)
+			if(D)
+				view(D)<<"The Stickman fades away."
+				del D*/
 mob/Spells/verb/Permoveo() // [your level] seconds - monster's level, but, /at least 30 seconds/?
 	set category = "Spells"
-	var/mob/Player/p = src
-	if(p.removeoMob)
-		p << "You release your hold of the monster you were controlling."
-		var/mob/Enemies/E = p.removeoMob
+	if(src.removeoMob)
+		src << "You release your hold of the monster you were controlling."
+		var/mob/NPC/Enemies/E = src.removeoMob
 		if(E.removeoMob)
 			spawn()
 				E.ReturnToStart()
 				E.removeoMob = null
-		p.removeoMob = null
-		client.eye=src
-		client.perspective=MOB_PERSPECTIVE
+		src.removeoMob = null
+		src.client.eye=src
+		src.client.perspective=MOB_PERSPECTIVE
 		return
 	var/list/enemies = list()
-	for(var/mob/Enemies/M in ohearers())
+	for(var/mob/NPC/Enemies/M in ohearers())
 		enemies.Add(M)
 	if(!enemies.len)
 		src << "There are no monsters in your view"
 	else
-
-		var/mpCost = 300
-		var/spellName = "Permoveo"
-
-		var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-		var/tier = round(log(10, uses)) - 1
-		mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-		if(canUse(src,cooldown=/StatusEffect/Permoveo,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-			var/mob/Enemies/selmonster = input("Which monster do you cast Permoveo on?","Permoveo") as null|anything in enemies
+		if(canUse(src,cooldown=/StatusEffect/Permoveo,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=300,againstocclumens=1))
+			var/mob/NPC/Enemies/selmonster = input("Which monster do you cast Permoveo on?","Permoveo") as null|anything in enemies
 			if(!selmonster) return
 			if(!(selmonster in view())) return
-			if(p.removeoMob) return
-			if(p.level < selmonster.level)
+			if(src.removeoMob) return
+			if(usr.level < selmonster.level)
 				src << errormsg("The monster is level [selmonster.level]. You need to be a higher level.")
 				return
-			new /StatusEffect/Permoveo(src, max(400-(usr.level/2), 30)*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
+			new /StatusEffect/Permoveo(src, max(400-(usr.level/2), 30))
 
 			hearers() << "[usr]: <i>Permoveo!</i>"
 			if(selmonster.removeoMob)
@@ -772,332 +688,337 @@ mob/Spells/verb/Permoveo() // [your level] seconds - monster's level, but, /at l
 				B.client.eye=B
 				B.client.perspective=MOB_PERSPECTIVE
 				B.removeoMob = null
-			p.MP -= mpCost
-			p.updateMP()
+			src.MP -= 300
+			src.updateMP()
 
-			p.removeoMob = selmonster
-			client.eye = selmonster
-			client.perspective = EYE_PERSPECTIVE
+			src.removeoMob = selmonster
+			src.client.eye = selmonster
+			src.client.perspective = EYE_PERSPECTIVE
 			selmonster.removeoMob = src
-			selmonster.ChangeState(selmonster.CONTROLLED)
+			selmonster.state = selmonster.CONTROLLED
 			selmonster.target = null
-			p.learnSpell(spellName)
+			usr:learnSpell("Permoveo")
 
-mob/Spells/verb/Incarcerous()
+mob/Spells/verb/Dementia()
+	set category = "Spells"
+	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=0,inhogwarts=0,target=null,mpreq=0,againstocclumens=1))
+		new /StatusEffect/Summoned(src,15)
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=3><font color=green> DEMENTIA!"
+		sleep(20)
+		hearers()<<"Thick black fog shoots out of [usr]'s wand."
+		sleep(20)
+		hearers()<<"A Dementor emerges from the smoke."
+		if(!src.loc.loc:safezoneoverride && (istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/hogwarts/Duel_Arenas) || istype(src.loc.loc,/area/hogwarts) || istype(src.loc.loc,/area/Diagon_Alley)))
+			src << "<b>You can't use this inside a safezone.</b>"
+			return
+		var/mob/NPC/Enemies/Summoned/Dementor/D = new (locate(src.x,src.y+1,src.z))
+		flick('MonsterSummon.dmi',D)
+		usr:learnSpell("Dementia")
+		src = null
+		spawn(600)
+			if(D && D.loc)
+				flick('mist.dmi',D)
+				view(D)<<"The Dementor fades into smoke and vanishes."
+				sleep(8)
+				D.loc = null
+
+obj/screenobj/conjunct
+		mouse_opacity = 0
+		icon = 'black50.dmi'
+		icon_state = "conjunct"
+proc/view2screenloc(view)
+	//example result "1,1 to 33,29
+	view = dd_replacetext(view,"x",",")
+	return "1,1 to [view]"
+mob/Spells/verb/Conjunctivis(mob/M in oview()&Players)
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 50
-	var/spellName = "Incarcerous"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedStun,needwand=1,inarena=1,insafezone=1,inhogwarts=1,mpreq=mpCost,againstocclumens=1))
-		new /StatusEffect/UsedStun(src,10*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Incarcerous")
-		hearers(usr.client.view, usr)<<"<b><span style=\"color:red;\">[usr]</span>:<b> Incarcerous!</b>"
-
-		castproj(MPreq = mpCost, Type = /obj/projectile/Bind { time = 3 }, icon_state = "bind", name = "Incarcerous", lag = 1)
-
-mob/Spells/verb/Anapneo(var/mob/Player/M in view())
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=0,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		//M.sight|=BLIND
+		new /StatusEffect/UsedAnnoying(src,15)
+		var/obj/screenobj/conjunct/S = new(M.client)
+		S.layer = 100
+		S.screen_loc = view2screenloc(M.client.view)
+		for(var/obj/screenobj/conjunct/P in M.client.screen)
+			//Remove preexisting blindness
+			del(P)
+		M.client.screen += S
+		hearers()<<"<b><font color=red>[usr]:</font> <font size=2><font color=green>Conjunctivis [M]."
+		usr<<"You've casted Conjunctivis upon [M], sealing \his eyes shut!"
+		M<<"[usr] used Conjunctivis on you! Your eyes have been sealed shut for 10 seconds!"
+		usr:learnSpell("Conjunctivis")
+		src=null
+		spawn(100)
+			if(S)
+				usr<<"Your Conjunctivis jinx has been lifted from [M]."
+				M<<"The conjunctivis jinx has expired."
+				del(S)
+mob/Spells/verb/Melofors(mob/M in oview()&Players)
 	set category="Spells"
-	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
-		if(!M.flying == 0){src<<"<b><span style=\"color:red;\">Error:</b></span> You can't cast this spell on someone who is flying.";return}
-		hearers()<<"<B><span style=\"color:red;\">[usr]:</span><font color=blue> <I>Anapneo!</I>"
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=0,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		new /StatusEffect/UsedAnnoying(src,15)
+		M.sight|=BLIND
+		hearers()<<"<b><font color=red>[usr]:</font> <font size=2><font color=red>Melofors [M]."
+		hearers()<<"<b>A giant pumpkin falls from the sky and lands upon [M.name]'s head.</b>"
+		M.overlays+=icon('pumpkinhead.dmi')
+		usr:learnSpell("Melofors")
+		src = null
+		spawn(100)
+			if(M)
+				M.sight&=~BLIND
+				M.overlays-=icon('pumpkinhead.dmi')
+				M<<"[usr]'s Melofors jinx has subsided."
+				if(usr)usr<<"Your Melofors jinx has subsided from [M]."
+
+
+
+mob/Spells/verb/Incarcerous(var/mob/M in oview()&Players)
+	set category="Spells"
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=/StatusEffect/UsedStun,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
+		new /StatusEffect/UsedStun(src,15)
+		M.movable=1
+		M.overlays+='bind.dmi'
+		hearers()<<"[usr]: <font color=aqua>Incarcerous, [M]!"
+		sleep(20)
+		hearers()<<"With a sudden spark, [usr]'s wand emits a stream of ropes which bind around [M]."
+		if(M && M.removeoMob)
+			M << "Your Permoveo spell failed.."
+			M.client.eye=M
+			M.client.perspective=MOB_PERSPECTIVE
+			M.removeoMob:ReturnToStart()
+			M.removeoMob:removeoMob = null
+			M.removeoMob = null
+		M<<"You are binded."
+		usr:learnSpell("Incarcerous")
+		src = null
+		spawn(300)
+			if(M && M.movable)
+				M<<"<font color= #999900><b>[usr]'s curse has been dispelled. You can move again!"
+				M.movable=0
+				M.overlays = null
+				M:ApplyOverlays()
+				if(usr)usr<<"<font color= #999900><b>Your curse upon [M] has been lifted."
+mob/Spells/verb/Anapneo(var/mob/M in view(usr.client.view,usr)&Players)
+	set category="Spells"
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		if(!M.flying == 0){src<<"<b><font color=red>Error:</b></font> You can't cast this spell on someone who is flying.";return}
+		hearers()<<"<B><font color=red>[usr]:</font><font color=blue> <I>Anapneo!</I>"
+		M.Rictusempra=0
+		M.Rictalk=0
 		M.silence=0
 		M.muff=0
 		sleep(20)
 		hearers(usr.client.view,usr)<<"[usr] flicks \his wand, clearing the airway of [M]."
 		usr:learnSpell("Anapneo")
-mob/Spells/verb/Reducto()
+mob/Spells/verb/Reducto(var/mob/M in (view(usr.client.view,usr)&Players)|src)
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 400
-	var/spellName = "Reducto"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedReducto,needwand=1,inarena=0,insafezone=1,inhogwarts=1,mpreq=mpCost,againstocclumens=1))
-		if(flying)
-			src << "<b><span style=\"color:red;\">Error:</b></span> You can't cast this spell while flying."
-			return
-		if(p.GMFrozen) return
-
-		new /StatusEffect/UsedReducto(src,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier,"Reducto")
-
-		p.MP -= mpCost
-		p.updateMP()
-
-		hearers(client.view, src) << "<B><span style=\"color:red;\">[src]:</span><font color=white> <I>Reducto!</I>"
-		if(p.nomove < 2)
-			p.nomove = 0
-			p.RemoveEffect("stone")
-		if(!trnsed) p.ApplyOverlays()
-		FlickState("apparate",8,'Effects.dmi')
-		p.learnSpell(spellName)
-
-mob/Spells/verb/Reparo()
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
+		if(M.flying){src<<"<b><font color=red>Error:</b></font> You can't cast this spell on someone who is flying.";return}
+		if(M.GMFrozen){alert("You can't free [M]. They have been frozen by a Game Master.");return}
+		hearers(usr.client.view,usr)<<"<B><font color=red>[usr]:</font><font color=white> <I>Reducto!</I>"
+		M.movable=0
+		M.overlays=null
+		M:ApplyOverlays()
+		if(M.confused)M.confused=0
+		hearers(usr.client.view,usr)<<"White light emits from [usr]'s wand, freeing [M]."
+		flick('Reducto.dmi',M)
+		M.BaseIcon()
+		M.icon_state=""
+		M.color=""
+		usr:learnSpell("Reducto")
+mob/Spells/verb/Reparo(obj/M in oview(src.client.view,src))
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 150
-	var/spellName = "Reparo"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedReparo,needwand=1,insafezone=1,inhogwarts=1,mpreq=mpCost))
-		new /StatusEffect/UsedReparo(src,10*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier,"Reparo")
-		hearers(client.view,src) << "[src]: <b>Reparo!</b>"
-		p.MP -= mpCost
-		p.updateMP()
-		p.learnSpell(spellName)
-
-		for(var/obj/o in oview(15, src))
-			if(!o.rubbleable || !o.rubble) continue
-
-			var/image/i = image('attacks.dmi',icon_state="heal")
-			o.overlays += i
-			sleep(10)
-			o.overlays -= i
-
-			o.icon=o.picon
-			o.name=o.pname
-			o.icon_state=o.piconstate
-			o.rubble=0
-			o.density = 1
-
-mob/Spells/verb/Bombarda()
+	if(canUse(src,cooldown=null,needwand=0,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		if(!M.rubbleable == 1){src<<"<b><font color=red>Error:</b></font> This object has Protection Charms placed upon it.";return}
+		if(M.rubble==1)
+			hearers(src.client.view,src) << "[src]: <b>Reparo!</b>"
+			M.icon=M.picon
+			M.name=M.pname
+			M.icon_state=M.piconstate
+			M.rubble=0
+			usr:learnSpell("Reparo")
+mob/Spells/verb/Bombarda(obj/M in oview(src.client.view,src))
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 100
-	var/spellName = "Bombarda"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,mpreq=mpCost,projectile=1))
-		p.lastAttack = "Bombarda"
-		var/dmg = p.Dmg + p.clothDmg
-		castproj(MPreq = mpCost, Type = /obj/projectile/Bomb, icon_state = "bombarda", damage = dmg * ((100 + tier*2) / 100), name = spellName, cd=3)
-
-mob/Spells/verb/Petreficus_Totalus()
+	if(canUse(src,cooldown=null,needwand=0,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		if(istype(M,/obj/items/wearable/wands/salamander_wand))
+			if(M.accioable==1)
+				return
+			else
+				var/mob/Player/p = usr
+				if(p.checkQuestProgress("Salamander Drop"))
+					hearers(src.client.view,src) << "[src]: <b>Bombarda!</b>"
+					usr << "You get some Salamander Drop!"
+					new/obj/items/Alyssa/Salamander_Drop(usr)
+					M.loc = null
+					p.Resort_Stacking_Inv()
+				else
+					usr << "There's no reason to ruin a perfectly good wand."
+		else
+			if(!M.rubbleable == 1){src<<"<b><font color=red>Error:</b></font> This object has Protection Charms placed upon it.";return}
+			if(M.rubble==1)
+				return
+			else
+				hearers(src.client.view,src) << "[src]: <b>Bombarda!</b>"
+				M.picon=M.icon
+				M.pname=M.name
+				M.piconstate=M.icon_state
+				M.name="Pile of Rubble"
+				M.icon='rubble.dmi'
+				M.icon_state=""
+				M.rubble=1
+				usr:learnSpell("Bombarda")
+mob/Spells/verb/Rictusempra(mob/M in oview(2)&Players)
+	set category="Spells"
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=500,againstocclumens=1))
+		spawn()
+			hearers()<< " <b>[usr]:<i><font color=blue> Rictusempra [M.name]!</i>"
+			hearers() << "<font color=white><b>[M.name] is tickled and begins to laugh hysterically."
+			M.Rictusempra=1
+			usr.MP-= 500
+			usr.updateMP()
+			usr:learnSpell("Rictusempra")
+			src = null
+			spawn(300)
+				if(M.Rictusempra||M.Rictalk)
+					hearers() << "<b>[usr]'s Rictusempra charm has lifted.</b>"
+				M.Rictusempra=0
+				M.Rictalk=0
+mob/Spells/verb/Petreficus_Totalus(var/mob/M in oview()&Players)
 	set category="Spells"
 	set name = "Petrificus Totalus"
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=/StatusEffect/UsedStun,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
+		new /StatusEffect/UsedStun(src,15)
+		if(M && M.removeoMob)
+			M << "Your Permoveo spell failed."
+			M.client.eye=M
+			M.client.perspective=MOB_PERSPECTIVE
+			M.removeoMob:ReturnToStart()
+			M.removeoMob:removeoMob = null
+			M.removeoMob = null
+		M<<"<font color= #999900>[usr] <b>uses <font color= #990099><b>Petrificus Totalus<font color= #999900> on you, <font color= #000099>turning you into stone for 10 seconds."
 
-	var/mob/Player/p = src
-	var/mpCost = 50
-	var/spellName = "Petrificus Totalus"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedStun,needwand=1,inarena=1,insafezone=1,inhogwarts=1,mpreq=mpCost,againstocclumens=1))
-		new /StatusEffect/UsedStun(src,10*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Petrificus Totalus")
-		hearers(usr.client.view, usr)<<"<b><span style=\"color:red;\">[usr]</span>:<b> Petrificus Totalus!</b>"
-
-		castproj(MPreq = mpCost, Type = /obj/projectile/Bind { min_time = 1; max_time = 10 }, icon_state = "stone", name = spellName, lag = 1)
+		M.movable=1
+		M.overlays=null
+		M.color="#595959"
+		hearers()<<"[usr]: <font color=blue>Petrificus Totalus!"
+		usr:learnSpell("Petrificus Totalus")
+		src = null
+		spawn(100)
+			if(usr)
+				usr<<"<font color= #999900><b>Your curse upon [M] has been lifted."
+			if(M)
+				M<<"<font color= #999900><b>[usr]'s curse has been dispelled. You can move again!"
+				M.movable=0
+				M.color=""
+				M:ApplyOverlays()
 
 mob
 	Player/var/tmp/antifigura = 0
 	proc
 		CanTrans(mob/Player/p)
-			if(p.noOverlays)
-				src << errormsg("You can't transfigure [p].")
-				return 0
 			if(p.antifigura > 0)
 				p.antifigura--
 				src << errormsg("Your spell failed, [p] is protected from transfiguring spells.")
 				if(p.antifigura==0)
 					p << errormsg("You were forced to release the shield around your body.")
-					new /StatusEffect/UsedTransfiguration(p,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
+					new /StatusEffect/UsedTransfiguration(p,15)
 				return 0
 			return 1
 
 mob/Spells/verb/Antifigura()
 	set category="Spells"
-
 	var/mob/Player/p = src
-	var/mpCost = 50
-	var/spellName = "Antifigura"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
 	if(p.antifigura > 0)
-		new /StatusEffect/UsedTransfiguration(usr,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
+		new /StatusEffect/UsedTransfiguration(usr,15)
 		src << infomsg("You release the shield around your body.")
 		p.antifigura = 0
-	else if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		hearers() << "<b><span style=\"color:red;\">[usr]</span></b>: <span style=\"color:white;\"><i>Antifigura!</i></span>"
-		p.antifigura = max(round((p.MMP) / rand(500,1500)), 1)
-		p.MP -= mpCost
-		p.updateMP()
-		usr:learnSpell(spellName)
+	else if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=50,againstocclumens=1))
+		hearers() << "<b><font color=red>[usr]</font></b>: <font color=white><i>Antifigura!</i></font>"
+		p.overlays+=image('Antifigura.dmi')
+		sleep(10)
+		p.overlays-=image('Antifigura.dmi')
+		p.antifigura = max(round((p.MMP+p.extraMMP) / rand(500,1500)), 1)
+		p.MP -= 50
+		usr:learnSpell("Antifigura")
 
 
 mob/Spells/verb/Chaotica()
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 30
-	var/spellName = "Chaotica"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	var/dmg = ((SWORD_FIRE in p.passives) ? (Dmg + clothDmg)*1.1 : round(level * 1.15 + clothDmg/3, 1)) + p.Fire.level
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
-		p.lastAttack = "Chaotica"
-		castproj(MPreq = mpCost, Type = /obj/projectile/NoImpact, icon_state = "chaotica", damage = dmg * ((100 + tier*2) / 100), name = spellName, element = FIRE)
+	var/dmg = round(usr.level * 1.1) + clothDmg
+	if(dmg<20)dmg=20
+	else if(dmg>2000)dmg = 2000
+	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=30,againstocclumens=1,projectile=1))
+		castproj(30,'attacks.dmi',"black",dmg,"Chaotica")
 mob/Spells/verb/Aqua_Eructo()
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 50
-	var/spellName = "Aqua Eructo"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
+	var/dmg = round(aqua[usr.aqua_level]*(usr.Def+(usr.extraDef/3) + clothDmg))
 	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,projectile=1))
-		p.HP -= mpCost
-		p.updateHP()
-		Death_Check()
-
-		var/dmg = round(p.Def / 3 + p.Water.level, 1)
-
-		usr:lastAttack = "Aqua Eructo"
-		castproj(icon_state = "aqua", damage = dmg * ((100 + tier*2) / 100), name = spellName, element = WATER)
-
-
-mob/Spells/verb/Sanguinis_Iactus()
-	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 10
-	var/spellName = "Blood"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=0,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
-
-		usr:lastAttack = "Sanguinis Iactus"
-		castproj(Type = /obj/projectile/Blood, MPreq = mpCost, icon_state = "blood", damage = (usr.Dmg + clothDmg) * ((100 + tier*2) / 100), name = spellName)
-
-mob/Spells/verb/Gravitate()
-	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 300
-	var/spellName = "Gravitate"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=0,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
-
-
-		castproj(Type = /obj/projectile/Grav, MPreq = mpCost, icon_state = "grav", name = spellName)
-
+		if(istype(usr.loc.loc, /area/arenas))
+			castproj(0,'Aqua Eructo.dmi',"",dmg,"Aqua Eructo")
+		else
+			HP -= 30
+			Death_Check()
+			castproj(0,'Aqua Eructo.dmi',"",dmg,"Aqua Eructo")
 mob/Spells/verb/Inflamari()
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/spellName = "Inflamari"
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-
-	var/dmg
-	if(SWORD_FIRE in p.passives)
-		dmg = (Dmg + clothDmg)*1.1
-	else
-		dmg = level * 0.9 + clothDmg
-
-		if(level < 200)
-			dmg *= 1 + (200 - level)/100
-
-		if(dmg <= 10)
-			dmg = 10 + rand(1,5)
-		else
-			dmg = round(dmg, 1)
-
+	var/dmg = round(usr.level * 0.9) + clothDmg
+	if(dmg<10)dmg=10
+	else if(dmg>1000)dmg = 1000
 	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,projectile=1))
-		p.lastAttack = "Inflamari"
-		castproj(icon_state = "fireball", damage = (dmg + p.Fire.level) * ((100 + tier*2)/ 100), name = spellName, element = FIRE)
+		castproj(0,'attacks.dmi',"fireball",dmg,"inflamari")
 mob/Spells/verb/Glacius()
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 20
-	var/spellName = "Glacius"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
-		usr:lastAttack = "Glacius"
-		castproj(MPreq = mpCost, icon_state = "iceball", damage = (usr.Dmg + clothDmg + usr:Water.level) * ((100 + tier*2) / 100), name = spellName, element = WATER)
+	var/dmg = round(glacius[usr.glacius_level]*(usr.Dmg+usr.extraDmg + clothDmg))
+	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=10,againstocclumens=1,projectile=1))
+		castproj(10,'attacks.dmi',"iceball",dmg,"Glacius")
 mob/Spells/verb/Waddiwasi()
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 20
-	var/spellName = "Waddiwasi"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
-		usr:lastAttack = "Waddiwasi"
-		castproj(MPreq = mpCost, icon_state = "gum", damage = (usr.Dmg + clothDmg + usr:Ghost.level) * ((100 + tier*2) / 100), name = spellName, element = GHOST)
-
-mob/Spells/verb/Gladius()
-	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 30
-	var/spellName = "Gladius"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
-		p.lastAttack = "Gladius"
-		castproj(MPreq = mpCost, Type = /obj/projectile/NoImpact/Dir, icon_state = "sword", damage = (usr.Dmg + clothDmg + usr:Ghost.level) * ((100 + tier*2) / 100), name = spellName, element = GHOST)
-
+	var/dmg = round(waddiwasi[usr.waddiwasi_level]*(usr.Dmg+usr.extraDmg + clothDmg))
+	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=10,againstocclumens=1,projectile=1))
+		castproj(10,'attacks.dmi',"gum",dmg,"Waddiwasi")
 mob/Spells/verb/Tremorio()
 	set category="Spells"
+	var/dmg = round(tremorio[usr.tremorio_level]*(usr.Dmg+usr.extraDmg + clothDmg))
+	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=5,againstocclumens=1,projectile=1))
+		castproj(5,'attacks.dmi',"quake",dmg,"Tremorio")
+mob/Spells/verb/Furnunculus(mob/M in oview()&Players)
+	set category="Spells"
+	if(canUse(src,cooldown=/StatusEffect/UsedFurnun,needwand=1,inarena=0,insafezone=0,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
+		new /StatusEffect/UsedFurnun(usr,60)
+		hearers()<<"<font color=red><b>[usr]: </font></b>Furnunculus!</font>"
+		hearers()<<"[usr] twirls \his wand towards [M], ever so lightly."
+		M.Zitt=0
+		sleep(50)
+		hearers()<<"[M]'s face begins to produce pimples! Puss-filled, erupting, mountainous zits!"
+		M.overlays+=image('pimple.dmi')
+		M.Zitt=1
+		src=null
+		spawn(rand(200,600))M.Zitt = 0
+		var/dmg
+		while(M.Zitt)
+			sleep(rand(30,120))
+			dmg = rand(40,150)
+			M.HP-=dmg
+			M.Death_Check()
+			M << "<small>You suffered [dmg] damage from Furnunculus.</small>"
+		M<<"<b>The jinx has been lifted. You are no longer afflicted by furnunculus.</b>"
+		M.overlays-=image('pimple.dmi')
+		usr:learnSpell("Furnunculus")
 
-	var/mob/Player/p = src
-	var/mpCost = 10
-	var/spellName = "Tremorio"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
-		usr:lastAttack = "Tremorio"
-		castproj(MPreq = mpCost, icon_state = "quake", damage = (usr.Dmg + clothDmg + usr:Earth.level) * ((100 + tier*2) / 100), name = spellName, element = EARTH)
 
 mob/var/tmp/list/_input
 
@@ -1133,7 +1054,7 @@ mob/Spells/verb/Arcesso()
 				break
 		if(arcessoing)
 			//partner found
-			new /StatusEffect/UsedArcesso(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
+			new /StatusEffect/UsedArcesso(src,15)
 			arcessoing.arcessoing = src
 			for(var/A in circles)
 				if(A:owner2) return
@@ -1155,7 +1076,7 @@ mob/Spells/verb/Arcesso()
 				stop_arcesso()
 				return
 			var/Input/popup = new(arcessoing, "Arcesso")
-			var/mob/Player/summonee = popup.InputList(arcessoing,"Who would you like to summon?", "Arcesso", null, Players(list(src, arcessoing)))
+			var/mob/summonee = popup.InputList(arcessoing,"Who would you like to summon?", "Arcesso", null, Players(list(src, arcessoing)))
 			if(!summonee||!arcessoing)
 				stop_arcesso()
 				return
@@ -1172,16 +1093,14 @@ mob/Spells/verb/Arcesso()
 						if(response == "Yes")
 							if(arcessoing)
 								if(arcessoing.arcessoing)
-									var/mob/Player/p1 = src
-									var/mob/Player/p2 = arcessoing
-									p1.MP -= 400
-									p2.MP -= 800
+									src.MP -= 400
+									arcessoing.MP -= 800
 
-									p1.learnSpell("Arcesso")
-									p2.learnSpell("Arcesso")
+									arcessoing:learnSpell("Arcesso")
+									arcessoing.arcessoing:learnSpell("Arcesso")
 
-									p1.updateMP()
-									p2.updateMP()
+									src.updateMP()
+									arcessoing.updateMP()
 									spawn()
 										var/obj/circle/c3_3/C = new (middle)
 										flick("a",C)
@@ -1204,6 +1123,7 @@ mob/Spells/verb/Arcesso()
 										sleep(1)
 										del(C)
 									spawn()
+										summonee.stuned = 1
 										var/obj/circle/c3_3/D = new (summonee.loc)
 										flick("a",D)
 										sleep(1)
@@ -1220,12 +1140,10 @@ mob/Spells/verb/Arcesso()
 										flick("c",D)
 										sleep(1)
 										del(D)
-									if(summonee.removeoMob)
-										spawn()
-											var/mob/m = summonee
-											m:Permoveo()
+									if(summonee.removeoMob) spawn()summonee:Permoveo()
 									sleep(5)
 									summonee << "You've been summoned by [src] and [src.arcessoing]."
+									summonee.stuned = 0
 									summonee:Transfer(middle)
 									stop_arcesso()
 									summonee.icon_state = ""
@@ -1243,7 +1161,7 @@ mob/Spells/verb/Arcesso()
 		else
 			//start waiting
 			if(src.MP>=800)
-				new /StatusEffect/UsedArcesso(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
+				new /StatusEffect/UsedArcesso(src,15)
 				arcessoing = 1
 				hearers() << "[src] is waiting for a partner. Face [src] on the opposite side of the circle and cast Arcesso to participate."
 				for(var/A in circles)
@@ -1266,57 +1184,47 @@ mob/Spells/verb/Arcesso()
 mob/Spells/verb/Flagrate(message as message)
 	set category = "Spells"
 	if(!message) return
-
-	var/mob/Player/p = src
-	var/mpCost = 300
-	var/spellName = "Flagrate"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedFlagrate,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		if(p.mute==0)
+	if(canUse(src,cooldown=/StatusEffect/UsedFlagrate,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=300,againstocclumens=1))
+		if(usr.mute==0)
 			if(str_count(message,"\n") > 20)
-				p << errormsg("Flagrate can only use up to 20 lines of text.")
+				usr << errormsg("Flagrate can only use up to 20 lines of text.")
 			else
 				message = copytext(message,1,500)
-				new /StatusEffect/UsedFlagrate(src,10*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-				hearers(client.view)<<"<span style=\"color:red;\"><b>[usr]:</span> Flagrate!"
+				new /StatusEffect/UsedFlagrate(src,10)
+				hearers(client.view)<<"<font color=red><b>[usr]:</font> Flagrate!"
+				usr.overlays+=image('Flagrate.dmi')
 				sleep(10)
-				hearers(client.view)<<"<span style=\"color:red;\"><b>[usr]:</span> <span style=\"color:#FF9933;\"><font size=3><font face='Comic Sans MS'> [html_encode(message)]</span>"
-				p.MP-=mpCost
-				p.updateMP()
-				p.learnSpell(spellName)
+				hearers(client.view)<<"<font color=red><b>[usr]:</font> <font color=#FF9933><font size=3><font face='Comic Sans MS'> [html_encode(message)]</font>"
+				usr.overlays-=image('Flagrate.dmi')
+				usr.MP-=300
+				usr.updateMP()
+				usr:learnSpell("Flagrate")
 		else
 			alert("You cannot cast this while muted.")
-mob/Spells/verb/Langlock(mob/Player/M in oview())
+mob/Spells/verb/Langlock(mob/M in oview()&Players)
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 600
-	var/spellName = "Langlock"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=mpCost,againstocclumens=1))
+	set name = "Langlock"
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=600,againstocclumens=1))
 		if(!M.silence)
 			M.silence=1
-			p.MP -= mpCost
-			p.updateMP()
+			src.MP -= 600
+			src.updateMP()
 			hearers()<<"[usr] flicks \his wand towards [M] and mutters, 'Langlock'"
 			hearers() << "<b>[M]'s tongue has been stuck to the roof of \his mouth. They are unable to speak.</b>"
-			p.learnSpell(spellName)
+			M.overlays+=image('Langlock.dmi')
+			usr:learnSpell("Langlock")
 			src = null
 			spawn(300)
 				if(M && M.silence)
 					M<<"<b>Your tongue unsticks from the roof of your mouth.</b>"
+					M.overlays-=image('Langlock.dmi')
 					M.silence=0
-mob/Spells/verb/Muffliato(mob/Player/M in view())
+mob/Spells/verb/Muffliato(mob/M in view()&Players)
 	set category = "Spells"
-	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
 		if(M.muff==1)
 			usr << "This person already has been charmed with Muffliato."
 			return
@@ -1333,133 +1241,133 @@ mob/Spells/verb/Muffliato(mob/Player/M in view())
 				M.muff=0
 mob/Spells/verb/Incindia()
 	set category="Spells"
-	if(inOldArena()) return
-
-	var/mob/Player/p = src
-	var/mpCost = 450
-	var/spellName = "Incindia"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedIncindia,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
+	if(canUse(src,cooldown=/StatusEffect/UsedIncindia,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=450,againstocclumens=1,projectile=1))
 		hearers()<<"[src] raises \his wand into the air. <font color=red><b><i>INCINDIA!</b></i>"
-		p.MP-=mpCost
-		p.updateMP()
-		new /StatusEffect/UsedIncindia(src,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier,"Incindia")
+		usr.MP-=450
+		usr.updateMP()
+		new /StatusEffect/UsedIncindia(src,15)
 		var/list/dirs = list(NORTH, SOUTH, EAST, WEST, NORTHEAST, NORTHWEST, SOUTHEAST, SOUTHWEST)
-		var/damage = round((p.Dmg + p.clothDmg + p.Fire.level) * 0.75)
-		p.learnSpell(spellName)
+		var/damage = round(incindia[usr.incindia_level]*((Dmg + extraDmg + clothDmg) * 0.75))
+		var/t = dir
+		usr:learnSpell("Incindia")
 		for(var/d in dirs)
-			castproj(icon_state = "fireball", damage = damage * ((100 + tier*2) / 100), name = "Incindia", cd = 0, lag = 1, element = FIRE, Dir=d)
-mob/Spells/verb/Replacio(mob/Player/M in oview())
+			dir = d
+			castproj(0, 'attacks.dmi', "fireball", damage, "incindia", 0, 1)
+		dir = t
+mob/Spells/verb/Replacio(mob/M in oview()&Players)
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 500
-	var/spellName = "Replacio"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=mpCost,againstocclumens=1))
-		if(issafezone(M.loc.loc, 0) && !issafezone(loc.loc, 0))
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=500,againstocclumens=1))
+		if(issafezone(M.loc.loc) && !issafezone(loc.loc))
 			src << "<b>[M] is inside a safezone.</b>"
 			return
-		hearers()<<"<b><span style=\"color:red;\">[usr]:</b></span> <font color=blue><B> <i>Replacio Duo.</i></B>"
+		hearers()<<"<b><Font color=red>[usr]:</b></font> <font color=blue><B> <i>Replacio Duo.</i></B>"
 		var/startloc = usr.loc
-		M.FlickState("Orb",12,'Effects.dmi')
-		usr.FlickState("Orb",12,'Effects.dmi')
-		p.Transfer(M.loc)
-		M.Transfer(startloc)
-		usr.FlickState("Orb",12,'Effects.dmi')
-		M.FlickState("Orb",12,'Effects.dmi')
+		flick('GMOrb.dmi',M)
+		flick('GMOrb.dmi',usr)
+		usr:Transfer(M.loc)
+		sleep(2)
+		if(!(startloc in view(M.client.view)))
+			M << errormsg("The replacio failed.")
+			usr << errormsg("The replacio failed.")
+			var/dense = density
+			Move(startloc)
+			density = dense
+			return
+		M:Transfer(startloc)
+		flick('GMOrb.dmi',usr)
+		flick('GMOrb.dmi',M)
 		hearers()<<"[usr] trades places with [M]"
-		p.MP-=mpCost
-		p.updateMP()
-		p.learnSpell(spellName)
+		usr.MP-=500
+		usr.updateMP()
+		usr:learnSpell("Replacio")
 mob/Spells/verb/Occlumency()
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/spellName = "Occlumency"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-
-	if(SHIELD_SPY in p.passives) tier++
-
-	if(p.occlumens == 0)
-		if(canUse(src,cooldown=/StatusEffect/UsedOcclumency,needwand=0,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=1,againstocclumens=1))
-
-			new /StatusEffect/UsedOcclumency(src,5*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-			for(var/mob/Player/c in Players)
-				if(c == p) continue
-				if(c.client.eye == p && c.Interface.SetDarknessColor(TELENDEVOUR_COLOR))
-
-					var/otherUses = ("Telendevour" in c.SpellUses) ? c.SpellUses["Telendevour"] : 1
-					var/otherTier = round(log(10, otherUses)) - 1
-
-					if(otherTier <= tier)
-						c << errormsg("Your Telendevour wears off.")
-						c.client.eye = c
-
-			hearers() << "<b><span style=\"color:red;\">[usr]</span></b>: <span style=\"color:white;\"><i>Occlumens!</i></span>"
-			p << "You can no longer be viewed by Telendevour."
-			p.occlumens = p.MMP
-			p.OcclumensCounter()
-			p.learnSpell(spellName)
-	else if(p.occlumens > 0)
-		src << "You release the barriers around your mind."
-		p.occlumens = -1
-
-mob/Spells/verb/Obliviate(mob/Player/M in oview())
-	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 700
-	var/spellName = "Obliviate"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=mpCost,againstocclumens=0))
-		hearers()<<"<b><span style=\"color:red;\">[usr]:<font color=green> Obliviate!</b></span>"
-		if(prob(15 - tier*2))
-			p << output(null,"output")
-			hearers()<<"[usr]'s spell has backfired."
-			if(prob(70)) p.learnSpell("Obliviate", -1)
+	if(canUse(src,cooldown=null,needwand=0,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=1,againstocclumens=1))
+		if(!usr.occlumens)
+			for(var/client/C)
+				if(C.eye)
+					if(C.eye == usr && C.mob != usr)
+						C << "<b><font color = white>Your Telendevour wears off."
+						C.eye=C.mob
+			hearers() << "<b><font color=red>[usr]</font></b>: <font color=white><i>Occlumens!</i></font>"
+			usr << "You can no longer be viewed by Telendevour."
+			usr.occlumens = usr.MMP+usr.extraMMP
+			usr:OcclumensCounter()
+			usr:learnSpell("Occlumency")
 		else
-			if(!M.admin || p == M) M << output(null,"output")
+			src << "You release the barriers around your mind."
+			usr.occlumens = 0
+mob/Spells/verb/Levicorpus(mob/M in view()&Players)
+	set category="Spells"
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=/StatusEffect/UsedLevicorpus,needwand=1,inarena=0,insafezone=0,inhogwarts=0,target=M,mpreq=800,againstocclumens=1))
+		hearers()<<"<b><font color=red>[usr]:<font color=green> Levicorpus.</b></font>"
+		hearers()<<"[M] is lifted off of \his feet and dangles upside down in the air."
+		if(M && M.removeoMob)
+			M << "Your Permoveo spell failed."
+			M.client.eye=M
+			M.client.perspective=MOB_PERSPECTIVE
+			M.removeoMob:ReturnToStart()
+			M.removeoMob:removeoMob = null
+			M.removeoMob = null
+		flick('mist.dmi',M)
+		if(M.Gender=="Female")
+			M.icon='FLevi.dmi'
+		else
+			M.icon='MLevi.dmi'
+		usr.MP-=800
+		usr.updateMP()
+		M.movable=1
+		for(var/obj/items/scroll/S in M)
+			S.Move(M.loc)
+		M:Resort_Stacking_Inv()
+		new /StatusEffect/UsedLevicorpus(src,60)
+		hearers()<<"[M]'s scrolls fall out of \his robes and float gently to the floor beneath them."
+		usr:learnSpell("Levicorpus")
+		src = null
+		spawn(100)
+			if(M)
+				M.movable=0
+				M.BaseIcon()
+				M.icon_state=""
+
+mob/Spells/verb/Obliviate(mob/M in oview()&Players)
+	set category="Spells"
+	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=700,againstocclumens=0))
+		hearers()<<"<b><font color=red>[usr]:<font color=green> Obliviate!</b></font>"
+		if(prob(15))
+			usr << output(null,"output")
+			hearers()<<"[usr]'s spell has backfired."
+			usr.overlays+=image('Obliviate.dmi')
+			if(prob(70)) usr:learnSpell("Obliviate", -1)
+			sleep(10)
+			usr.overlays-=image('Obliviate.dmi')
+		else
+			M << output(null,"output")
 			hearers()<<"[usr] wiped [M]'s memory!"
-			p.learnSpell(spellName)
-		p.MP-=mpCost
-		new /StatusEffect/UsedAnnoying(src,30*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-		p.updateMP()
-mob/Spells/verb/Tarantallegra(mob/Player/M in view())
+			M.overlays+=image('Obliviate.dmi')
+			usr:learnSpell("Obliviate")
+			sleep(15)
+			M.overlays-=image('Obliviate.dmi')
+		usr.MP-=700
+		new /StatusEffect/UsedAnnoying(src,30)
+		usr.updateMP()
+mob/Spells/verb/Tarantallegra(mob/M in view()&Players)
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 200
-	var/spellName = "Tarantallegra"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=mpCost,againstocclumens=1))
+	if(M.derobe||M.aurorrobe)
+		usr<<"[M] is protected by powerfull charm."
+		return 0
+	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=100,againstocclumens=1))
 		if(M.dance) return
 		hearers()<<"<b>[usr]:</B><font color=green> <i>Tarantallegra!</i>"
-		new /StatusEffect/UsedAnnoying(src,30*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		p.MP-=mpCost
-		p.updateMP()
-		if(key != "Murrawhip")
+		new /StatusEffect/UsedAnnoying(src,15)
+		usr.MP-=100
+		usr.updateMP()
+		if(!(src.key in suppers))
 			M.dance=1
-		p.learnSpell(spellName)
+		usr:learnSpell("Tarantallegra")
 		src=null
 		spawn()
 			view(M)<<"[M] begins to dance uncontrollably!"
@@ -1467,167 +1375,157 @@ mob/Spells/verb/Tarantallegra(mob/Player/M in view())
 			var/dirs = list(NORTH,EAST,SOUTH,WEST,NORTHWEST,NORTHEAST,SOUTHWEST,SOUTHEAST)
 			while(M && timer < 24)
 				timer++
-				if(!M.nomove)
+				if(!M.movable)
 					var/turf/t = get_step_rand(M)
-					if(t && !(issafezone(M.loc.loc, 0) && !issafezone(t.loc, 0)))
+					if(t && !(issafezone(M.loc.loc) && !issafezone(t.loc)))
 						M.Move(t)
 				M.dir = pick(dirs)
 				sleep(5)
 			if(M) M.dance = 0
 mob/Spells/verb/Immobulus()
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 500
-	var/spellName = "Immobulus"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedImmobulus,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-		new /StatusEffect/UsedImmobulus(src, 20*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		p.MP-=mpCost
-		p.updateMP()
-
-		p.learnSpell(spellName)
-
+	if(canUse(src,cooldown=/StatusEffect/UsedStun,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=600,againstocclumens=1))
+		new /StatusEffect/UsedStun(src,15)
 		hearers()<<"<b>[usr]:</b> <font color=blue>Immobulus!"
-		hearers()<<"A sudden wave of energy emits from [usr]'s wand, immobilizing every projectile in sight."
-
-		var/const/RANGE = 6
-		var/const/TICKS = 80
-		var/const/STEP  = 3
-
-		var/obj/o = new(loc)
-		o.alpha = 0
-		o.layer = 6
-		light(o, range=RANGE, ticks=TICKS, state = "rand")
-
-		if(p.holster && p.holster.projColor)
-			o.color = p.holster.projColor
-		else if(p.wand && p.wand.projColor)
-			o.color = p.wand.projColor
-
-		animate(o, alpha = 255, time = 10)
-
-		for(var/time = 0 to TICKS step STEP)
-			for(var/obj/projectile/proj in oview(RANGE, o))
-				if(proj.overlays.len)	continue
-
-				proj.overlays += image('attacks.dmi', icon_state = "immobulus")
-				proj.velocity = 0
-				walk(proj, 0)
-
-			sleep(STEP)
-
-		o.Dispose()
-
+		hearers()<<"A sudden wave of energy emits from [usr]'s wand, immobilizing everything in sight."
+		usr.MP-=600
+		usr.updateMP()
+		var/list/people = list()
+		for(var/mob/Player/M in ohearers())
+			if(!M.derobe||!M.aurorrobe)
+				if(M && M.removeoMob)
+					M << "Your Permoveo spell failed.."
+					M.client.eye=M
+					M.client.perspective=MOB_PERSPECTIVE
+					M.removeoMob:ReturnToStart()
+					M.removeoMob:removeoMob = null
+					M.removeoMob = null
+				people += M
+				M.movable=1
+				M.Immobile=1
+				M.overlays.Remove(image('Immobulus.dmi'))
+				M.overlays += image('Immobulus.dmi')
+		usr:learnSpell("Immobulus")
+		src=null
+		spawn(100)
+			for(var/mob/Player/p in people)
+				if(p && p.Immobile==1)
+					p.overlays -= image('Immobulus.dmi')
+					p.movable=0
+					p.Immobile=0
+					if(usr)p<<"[usr]'s Immobulus curse wore off. You can move again."
 mob/Spells/verb/Impedimenta()
 	set category = "Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 750
-	var/spellName = "Impedimenta"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedStun,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
+	if(canUse(src,cooldown=/StatusEffect/UsedStun,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=750,againstocclumens=1))
 		hearers()<<"<b>[usr]:</b> <font color=red>Impedimenta!"
 		hearers()<<"A sharp blast of energy emits from [usr]'s wand, slowing down everything in the area."
-		p.MP-=mpCost
-		p.updateMP()
-		new /StatusEffect/UsedStun(src,20*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
+		usr.MP-=750
+		usr.updateMP()
+		new /StatusEffect/UsedStun(src,20)
 		var/turf/lt = list()
 		for(var/turf/T in view(7))
 			lt += T
 			T.overlays += image('black50.dmi',"impedimenta")
-			T.slow += 1
-		p.learnSpell(spellName)
+			T.slow += 5
+		usr:learnSpell("Impedimenta")
 		src = null
 		spawn(100)
 			for(var/turf/T in lt)
 				T.overlays -= image('black50.dmi',"impedimenta")
-				if(T.slow >= 1)
-					T.slow -= 1
+				if(T.slow >= 5)
+					T.slow -= 5
 mob/Spells/verb/Incendio()
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 20
-	var/spellName = "Incendio"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-
-		var/dmg = ((SWORD_FIRE in p.passives) ? (Dmg + clothDmg)*1.2 : round(level * 1.15 + clothDmg/3, 1)) + p.Fire.level
-
-		p.lastAttack = "Incendio"
-		castproj(Type = /obj/projectile/BurnRoses, damage = dmg * ((100 + tier*2) / 100), MPreq = mpCost, icon_state = "fireball", name = spellName, element = FIRE)
-
-mob/Player/proc/BaseIcon()
-
-	if(noOverlays) return
-
-	if(icon_state == "Crocodile")
-		transform = null
-		icon_state = null
-
-	if(Gender == "Female")
-		if(Gm)
-			icon = 'FemaleStaff.dmi'
-		else if(House == "Gryffindor")
-			icon = 'FemaleGryffindor.dmi'
-		else if(House == "Ravenclaw")
-			icon = 'FemaleRavenclaw.dmi'
-		else if(House == "Slytherin")
-			icon = 'FemaleSlytherin.dmi'
-		else if(House == "Hufflepuff")
-			icon = 'FemaleHufflepuff.dmi'
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=20,againstocclumens=1))
+		usr:learnSpell("Incendio")
+		var/obj/S=new/obj/Incendio
+		if(usr.projcolor=="")
+			S.icon_state+="-old"
+		else
+			S.color = usr.projcolor
+		usr.MP-=20
+		usr.updateMP()
+		S.loc=(usr.loc)
+		S.owner="[usr]"
+		walk(S,usr.dir,2)
+		sleep(20)
+		del S
+/*mob/Spells/verb/Cugeo(mob/Player/M in view()&Players)
+	set category="Spells"
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=10,againstocclumens=1))
+		hearers()<<"<b><font color=red>[usr]</font>:<FONT COLOR=#dda0dd>C</FONT><FONT COLOR=#ef736f>u</FONT><FONT COLOR=#ff4500>g</FONT><FONT COLOR=#bea100>e</FONT><FONT COLOR=#7cfc00>o</FONT></FONT>, [M].</b>"
+		sleep(20)
+		flick('fireworks.dmi',M)
+		M.overlays+=image('hair.dmi',icon_state="black")*/
+mob/var/custom_icon
+mob/var/r_custom_icon=0
+mob/proc/BaseIcon()
+	if(custom_icon_C==1)
+		icon = custom_icon
 	else
-		if(Gm)
-			icon = 'MaleStaff.dmi'
-		else if(House == "Gryffindor")
-			icon ='MaleGryffindor.dmi'
-		else if(House == "Ravenclaw")
-			icon = 'MaleRavenclaw.dmi'
-		else if(House == "Slytherin")
-			icon = 'MaleSlytherin.dmi'
-		else if(House == "Hufflepuff")
-			icon = 'MaleHufflepuff.dmi'
+		if(level>500)
+			if(Gender == "Female")
+				icon = 'FemaleCustom.dmi'
+			else
+				icon = 'MaleCustom.dmi'
+		else
+			if(Gender == "Female")
+				if(Gm)
+					icon = 'FemaleStaff.dmi'
+				else if(aurorrobe)
+					icon = 'FemaleAuror.dmi'
+				else if(House == "Gryffindor")
+					icon = 'FemaleGryffindor.dmi'
+				else if(House == "Ravenclaw")
+					icon = 'FemaleRavenclaw.dmi'
+				else if(House == "Slytherin")
+					icon = 'FemaleSlytherin.dmi'
+				else if(House == "Hufflepuff")
+					icon = 'FemaleHufflepuff.dmi'
+			else
+				if(Gm)
+					icon = 'MaleStaff.dmi'
+				else if(aurorrobe)
+					icon = 'MaleAuror.dmi'
+				else if(House == "Gryffindor")
+					icon = 'MaleGryffindor.dmi'
+				else if(House == "Ravenclaw")
+					icon = 'MaleRavenclaw.dmi'
+				else if(House == "Slytherin")
+					icon = 'MaleSlytherin.dmi'
+				else if(House == "Hufflepuff")
+					icon = 'MaleHufflepuff.dmi'
+	sleep(1)
+	baseicon= icon
 
-mob/Spells/verb/Reddikulus(mob/Player/M in view())
+mob/Spells/verb/Reddikulus(mob/Player/M in oview(usr.client.view,usr)&Players)
 	set category="Spells"
 	set name = "Riddikulus"
-	if(canUse(src,cooldown=/StatusEffect/UsedRiddikulus,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1))
+	if(canUse(src,cooldown=/StatusEffect/UsedRiddikulus,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=100,againstocclumens=1))
 		if(M.trnsed == 1)
 			usr << "That person is already transfigured."
 			return
 		if(!M) return
-		new /StatusEffect/UsedRiddikulus(src,30*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		hearers()<<"<b><span style=\"color:red;\">[usr]</span>: <span style=\"color:red;\"><font size=3>Riddikulus!</span></font>, [M].</b>"
-
+		if(M.derobe) return
+		new /StatusEffect/UsedRiddikulus(src,30)
+		hearers()<<"<b><font color=red>[usr]</font>: <font color=red><font size=3>Riddikulus!</font></font>, [M].</b>"
+		sleep(20)
+		flick('teleboom.dmi',M)
 		M.Gender = M.Gender == "Male" ? "Female" : "Male"
 		M.BaseIcon()
 		M.Gender = M.Gender == "Male" ? "Female" : "Male"
-		flick("transfigure",M)
 		usr:learnSpell("Riddikulus")
 		src=null
 		spawn(1200)
 			if(M)
 				M << "<b>You turn back to Normal</b>."
+				flick('teleboom.dmi',M)
 				M.BaseIcon()
-				flick("transfigure",M)
 
 mob/Spells/verb/Ecliptica()
 	set category="Spells"
 	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
-		hearers()<<"<b><span style=\"color:red;\">[usr]</span></b>: Ecliptica!"
+		hearers()<<"<b><font color=red>[usr]</font></b>: Ecliptica!"
 		light(src, 3, 300, "light")
 		var/time = 150
 		while(time > 0)
@@ -1635,405 +1533,271 @@ mob/Spells/verb/Ecliptica()
 				step_away(M, src)
 			time--
 			sleep(2)
-mob/Spells/verb/Delicio()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Delicio")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>: <b>Delicio!</b>"
-		usr:learnSpell("Delicio")
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Delicio", lag = 0)
-
-mob/Spells/verb/Avifors()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Avifors")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:gray;\">[usr]</span>: <b>Avifors!</b>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Avifors", lag = 0)
-
-mob/Spells/verb/Ribbitous()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Ribbitous")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>:<b><span style=\"color:green;\"> Ribbitous!</b></span>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Ribbitous", lag = 0)
-
-mob/Spells/verb/Carrotosi()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Carrotosi")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>:<b><span style=\"color:red;\"> Carrotosi!</b></span>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Carrotosi", lag = 0)
 
 mob/Spells/verb/Self_To_Dragon()
 	set name = "Personio Draconum"
 	set category="Spells"
 	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,againstflying=0,againstcloaked=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Personio Draconum")
+		new /StatusEffect/UsedTransfiguration(src,15)
 		if(CanTrans(src))
-			var/mob/Player/p = src
-			p<<"You transformed yourself into a fearsome Dragon!"
-			flick("transfigure",src)
-			p.trnsed = 1
-			p.overlays = null
-			if(p.away)p.ApplyAFKOverlay()
-			p.icon = 'Dragon.dmi'
+			usr<<"You transformed yourself into a fearsome Dragon!"
+			flick("transfigure.dmi",src)
+			usr.trnsed = 1
+			usr.overlays = null
+			if(usr.away)usr.ApplyAFKOverlay()
+			usr.icon = 'Dragon.dmi'
 mob/Spells/verb/Self_To_Mushroom()
 	set name = "Personio Musashi"
 	set category="Spells"
 	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,againstflying=0,againstcloaked=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Personio Musashi")
+		new /StatusEffect/UsedTransfiguration(src,15)
 		if(CanTrans(src))
-			var/mob/Player/p = src
-			p<<"You transformed yourself into a Mushroom!"
-			flick("transfigure",src)
-			p.overlays = null
-			if(p.away) p.ApplyAFKOverlay()
-			p.trnsed = 1
-			p.learnSpell("Personio Musashi")
-			switch(p.House)
+			usr<<"You transformed yourself into a Mushroom!"
+			flick("transfigure.dmi",src)
+			usr.overlays = null
+			if(usr.away)usr.ApplyAFKOverlay()
+			usr.trnsed = 1
+			usr:learnSpell("Personio Musashi")
+			switch(usr.House)
 				if("Gryffindor")
-					p.icon = 'Red_Mushroom.dmi'
+					usr.icon = 'Red_Mushroom.dmi'
 				if("Slytherin")
-					p.icon = 'Green_Mushroom.dmi'
+					usr.icon = 'Green_Mushroom.dmi'
 				if("Ravenclaw")
-					p.icon = 'Blue_Mushroom.dmi'
+					usr.icon = 'Blue_Mushroom.dmi'
 				if("Hufflepuff")
-					p.icon = 'Yellow_Mushroom.dmi'
+					usr.icon = 'Yellow_Mushroom.dmi'
 				else
-					p.icon = 'Yellow_Mushroom.dmi'
+					usr.icon = 'Yellow_Mushroom.dmi'
 mob/Spells/verb/Self_To_Skeleton()
 	set name = "Personio Sceletus"
 	set category="Spells"
 	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,againstflying=0,againstcloaked=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Personio Sceletus")
+		new /StatusEffect/UsedTransfiguration(src,15)
 		if(CanTrans(src))
-			var/mob/Player/p = src
-			p<<"You transformed yourself into a Skeleton!"
-			flick("transfigure",p)
-			p.trnsed = 1
-			p.overlays = null
-			if(p.away)p.ApplyAFKOverlay()
-			p.icon = 'Skeleton.dmi'
-			p.learnSpell("Personio Sceletus")
-mob/Spells/verb/Other_To_Human(mob/Player/M in oview())
-	set name = "Transfiguro Revertio"
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=1,againstflying=0,againstcloaked=1))
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>:<b><span style=\"color:green;\"> Transfiguro Revertio, [M].</b></span>"
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		if(CanTrans(M))
-			flick("transfigure",M)
-			M.trnsed = 0
-			M.BaseIcon()
-			M.ApplyOverlays()
-			usr<<"You reversed [M]'s transfiguration."
-			M<<"[usr] reversed your transfiguration."
-			usr:learnSpell("Transfiguro Revertio")
+			usr<<"You transformed yourself into a Skeleton!"
+			flick("transfigure.dmi",usr)
+			usr.trnsed = 1
+			usr.overlays = null
+			if(usr.away)usr.ApplyAFKOverlay()
+			usr.icon = 'Skeleton.dmi'
+			usr:learnSpell("Personio Sceletus")
+
 mob/Spells/verb/Self_To_Human()
 	set name = "Personio Humaium"
 	set category="Spells"
+	var/mob/Player/user = usr
 	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1,againstflying=0,againstcloaked=1))
 		if(CanTrans(src))
-			var/mob/Player/p = src
-			flick("transfigure",p)
-			p.trnsed = 0
-			p.BaseIcon()
-			p.ApplyOverlays()
-			p<<"You reversed your transfiguration."
-mob/Spells/verb/Harvesto()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Harvesto")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>:<b> Harvesto!</b>"
+			flick('transfigure.dmi',usr)
+			if(usr.aurorrobe)
+				usr.trnsed = 0
+				if(usr.Gender == "Female")
+					usr.icon = 'FemaleAuror.dmi'
+				else
+					usr.icon = 'MaleAuror.dmi'
+			else if(usr.derobe)
+				usr.icon = 'Deatheater.dmi'
+				if(usr.key=="Ancient8")usr.icon='HDE.dmi'
+			else
+				usr.trnsed = 0
+				usr.BaseIcon()
+				usr.icon = usr.baseicon
+			user.ApplyOverlays()
+			usr<<"You reversed your transfiguration."
 
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Harvesto", lag = 0)
-
-mob/Spells/verb/Felinious()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Felinious")
-		hearers(usr.client.view, usr)<<"<b><span style=\"color:red;\">[usr]</span>:<b> Felinious!</b>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Felinious", lag = 0)
-
-mob/Spells/verb/Scurries()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Scurries")
-		hearers(usr.client.view, usr)<<"<b><span style=\"color:red;\">[usr]</span>: <b>Scurries!</b>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Scurries", lag = 0)
-
-mob/Spells/verb/Seatio()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Seatio")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>: <b>Seatio!</b>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Seatio", lag = 0)
-
-mob/Spells/verb/Nightus()
-	set category="Spells"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Nightus")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>: <b>Nightus!</b>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Nightus", lag = 0)
-
-mob/Spells/verb/Peskipixie_Pesternomae()
-	set category="Spells"
-	set name = "Peskipiksi Pestermi"
-	if(canUse(src,cooldown=/StatusEffect/UsedTransfiguration,needwand=1,inarena=0,insafezone=1,inhogwarts=1))
-		new /StatusEffect/UsedTransfiguration(src,15*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier,"Peskipiksi Pestermi")
-		hearers(usr.client.view,usr)<<"<b><span style=\"color:red;\">[usr]</span>: <b>Peskipiksi Pestermi!</b>"
-
-		castproj(Type = /obj/projectile/Transfiguration, icon_state = "trans", name = "Peskipiksi Pestermi", lag = 0)
 
 mob/Spells/verb/Telendevour()
 	set category="Spells"
 	set popup_menu = 0
-
-	var/mob/Player/p = src
-	var/mpCost = 50
-	var/spellName = "Telendevour"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(usr.client.eye == usr)
-		if(canUse(src,cooldown=/StatusEffect/UsedTelendevour,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-
-			if(IsInputOpen(src, spellName))
-				del _input[spellName]
-
-			var/Input/popup = new (src, spellName)
-			var/list/l = Players(list(src))
-			if(!l.len) return
-			var/mob/Player/M = popup.InputList(src, "Which person would you like to view?", spellName, l[1], l)
-			del popup
-
-			if(!M) return
+	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		if(usr.client.eye==usr)
+			var/mob/M = input("Which person would you like to view?") as null|anything in Players(list(src))
+			if(!M)return
 			if(usr.client.eye != usr) return
-
-			if(istext(M) || istype(M.loc.loc, /area/ministry_of_magic))
-				src << errormsg("<b>You feel magic repelling your spell.</b>")
+			if(istext(M) || istype(M,/mob/fakeDE) || istype(M.loc.loc, /area/blindness) || M.occlumens>0 || M.derobe || M.aurorrobe || istype(M.loc.loc, /area/ministry_of_magic) || istype(M.loc.loc, /area/GMroom))
+				src<<"<b>You feel magic repelling your spell.</b>"
 			else
-				var/otherUses = ("Occlumency" in M.SpellUses) ? M.SpellUses["Occlumency"] : 1
-				var/otherTier = round(log(10, otherUses)) - 1
-
-				var/spycraft = (SHIELD_SPY in M.passives)
-				if(spycraft) otherTier++
-
-				if(tier <= otherTier && M.occlumens>0)
-					src << errormsg("<b>You feel magic repelling your spell.</b>")
+				usr.client.eye=M
+				usr.client.perspective=EYE_PERSPECTIVE
+				file("Logs/Telenlog.txt") << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] telendevoured [M]"
+				var/randnum = rand(1,7)
+				hearers()<<"[usr]:<font color=blue><b><font size=2> Telendevour!</font>"
+				usr:learnSpell("Telendevour")
+				if(randnum == 1)
+					M<<"You feel that <b>[usr]</b> is watching you."
 				else
-					new /StatusEffect/UsedTelendevour(src,5*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier,spellName)
+					M<<"The hair on the back of your neck tingles."
+		else
+			if(usr.client.perspective == EYE_PERSPECTIVE)
+				usr.client.eye=usr
+				usr.client.perspective=EYE_PERSPECTIVE
+				hearers()<<"[usr]'s eyes appear again."
+mob/Spells/verb/Arania_Eximae()
+	set category="Spells"
+	set name = "Arania Exumai"
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=50,againstocclumens=1))
+		usr.MP-=50
+		usr.updateMP()
+		hearers()<<"<b><font color=red>[usr]</b></font>: <b><font size=2><font color=white> Arania Exumai!"
+		usr:learnSpell("Arania Exumai")
+		for(var/mob/NPC/Enemies/Acromantula/A in oview())
+			A.overlays+=image('arania.dmi')
+			spawn(20)
+				if(A.removeoMob)
+					var/tmpmob = A.removeoMob
+					A.removeoMob = null
+					spawn()tmpmob:Permoveo()
 
-					p.MP -= mpCost
-					p.updateMP()
-
-					p.Interface.SetDarknessColor(TELENDEVOUR_COLOR, 2)
-					p.client.eye = M
-					p.client.perspective = EYE_PERSPECTIVE
-					file("Logs/Telenlog.text") << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] telendevoured [M]"
-					var/randnum = rand(1,7)
-					hearers() << "[usr]:<span style=\"font-size:2;\"><font color=blue><b> Telendevour!</b></span>"
-					p.learnSpell(spellName)
-					if(spycraft || randnum == 1)
-						M << "You feel that <b>[usr]</b> is watching you."
-					else
-						M << "The hair on the back of your neck tingles."
-	else if(p.Interface.SetDarknessColor(TELENDEVOUR_COLOR))
-		usr.client.eye = usr
-		usr.client.perspective = EYE_PERSPECTIVE
-		hearers() << "[usr]'s eyes appear again."
-
-
-//AVADA//
-
+				A.overlays-=image('arania.dmi')
+				A.loc = locate(1,1,1)
+				Respawn(A)
+		sleep(19)
+		hearers()<<"A blast shoots out of [usr]'s wand."
 mob/Spells/verb/Avada_Kedavra()
 	set category="Spells"
+	if(!src.Gm)
+		if(canUse(src,cooldown=/StatusEffect/UsedAvada,needwand=1,inarena=0,insafezone=0,inhogwarts=1,target=null,mpreq=1500))
+			castproj(1500,'attacks.dmi',"avada",10000000000,"Avada Kedavra")
+			new /StatusEffect/UsedAvada(src,15)
+			usr.updateMP()
+	else
+		if(canUse(src,cooldown=/StatusEffect/UsedAvada,needwand=1,inarena=0,insafezone=0,inhogwarts=1,target=null,mpreq=0))
+			castproj(0,'attacks.dmi',"avada",10000000000,"Avada Kedavra")
+			new /StatusEffect/UsedAvada(src,1)
+			usr.updateMP()
 
-	var/mob/Player/p = src
-	var/mpCost = 800
-	var/spellName = "Avada Kedavra"
+mob/Spells/verb/Lumos()
+	set category = "Spells"
+	if(canUse(src,cooldown=/StatusEffect/UsedLumos,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=50,againstocclumens=1))
+		var/mob/Player/p = src
+		var/obj/light/L = new(src.loc)
+		new /StatusEffect/UsedLumos(src,20)
+		hearers()<<"<font color=red><b>[usr] :</font></b> <font color=yellow>Lumos!"
+		L.luminosity=4
+		usr.MP-=50
+		usr.updateMP()
+		L.color="#999999"
+		animate(L, transform = matrix() * 0.9, time = 10, loop = -1)
+		animate(   transform = matrix() * 1.2,   time = 10)
+		p.addFollower(L)
+		sleep(200)
+		if(p && L)
+			p.removeFollower(L)
+			del(L)
 
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
+mob/Spells/verb/Nox()
+	set category = "Spells"
+	if(canUse(src,cooldown=/StatusEffect/UsedNox,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=50,againstocclumens=1))
+		new /StatusEffect/UsedNox(src,10)
+		hearers()<<"<font color=red><b>[usr]:</font></b> <font color=#333>Nox!"
+		for(var/mob/M in oview(8))
+			M.max_lumos=0
+		for(var/obj/light/L in oview(8))
+			L.loc=null
+			del L
+		for(var/obj/lan_light/A in oview(8))
+			A.loc=null
+			del A
+		for(var/obj/light_max/cc in oview(8))
+			cc.loc=null
+			del cc
+		usr.MP-=50
+		if(usr.max_lumos==1)usr.max_lumos=0
+		usr.updateMP()
 
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=0,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1,projectile=1))
 
-		var/dmg = usr.Dmg + clothDmg + usr:Ghost.level
-		dmg = round(dmg + dmg * 0.35, 1)
-
-		castproj(MPreq = mpCost, Type = /obj/projectile/Avada, damage = dmg * ((100 + tier*2) / 100), icon_state = "avada", name = spellName, element = GHOST, lag = 0, cd=4)
-
-
-mob/Spells/verb/Apparate()
-	set category="Spells"
-	var/mpCost = (RING_APPARATE in usr:passives) ? 350 : 150
-	if(canUse(src,cooldown=/StatusEffect/Apparate,needwand=1,mpreq=mpCost))
-
-		var/area/a = loc.loc
-		if(a.antiApparate)
-			src << errormsg("Strong charms are stopping you.")
-			return
-
-		var/turf/t
-
-		var/mob/Enemies/e = locate() in oview(15, src)
-
-		if(e)
-			t = get_step_towards(e, src)
-
-		if(!t)
-			var/obj/o = new (loc)
-			o.density = 1
-
-			var/steps = 15
-			while(o.loc != src && steps > 0)
-				steps--
-				if(!step(o, dir) || o.loc.loc:antiApparate) break
-				t = o.loc
-
-			o.loc = null
-
-		if(t)
-			var/mob/Player/p = src
-			p.Apparate(t)
-			if(e)
-				p.dir = get_dir(p, e)
+mob/Spells/verb/Lumos_Maxima()
+	set category = "Spells"
+	if(usr.max_lumos==1)
+		usr<<"You've already used Lumos Maxima!"
+		return 0
+	if(canUse(src,cooldown=/StatusEffect/UsedLumos,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=5,againstocclumens=1))
+		var/obj/S=new/obj/light_max
+		hearers()<<"<font color=red><b>[usr] :</font></b> <b><BIG><font color=yellow>!LUMOS MAXIMA!</b></font></BIG>"
+		new /StatusEffect/UsedLumos(src,20)
+		var/mob/Player/p = src
+		S.owner = usr
+		S.color="#999999"
+		S.loc=(usr.loc)
+		usr.max_lumos=1
+		animate(S, transform = matrix() * 1.1, time = 10, loop = -1)
+		animate(   transform = matrix() * 1.4,   time = 10)
+		p.addFollower(S)
+		while(p.max_lumos==1 && p.MP>5)
+			p.MP-=0.5
+			p.updateMP()
+			sleep(1)
+		p.max_lumos=0
+		if(p && S)
+			p.removeFollower(S)
+			del S
 
 mob/Spells/verb/Episky()
 	set name = "Episkey"
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/spellName = "Episkey"
-	var/mpCost = 50
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedEpiskey,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=mpCost,againstocclumens=1))
-
-		var/obj/The_Dark_Mark/D = locate("DarkMark")
-		if(get_dist(p, D) <= 10)
-			p << errormsg("You can't use this near such evil presence.")
-			return
-
-		if(world.time - p.lastCombat <= COMBAT_TIME)
-			p << errormsg("You can't use this while in combat.")
-			return
-
-		hearers()<<"<span style=\"color:red;\"><b>[p]:</span></b> <font color=aqua>Episkey!"
-		var/cd
-		if(level < 100)
-			cd = 10
-		else if(level < 200)
-			cd = 15
-		else
-			cd = 20
-		new /StatusEffect/UsedEpiskey(src,cd*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier,"Episkey")
-
-		var/percent = 0
-
-		if(tier >= 1) percent += tier * 2
-		if(SHIELD_NURSE in p.passives)	percent += 24 + p.passives[SHIELD_NURSE]
-
-		if(percent > 0)
-			p.Shield = round(p.MHP * (percent / 100), 1)
-
-		p.HP = p.MHP
-		p.updateHP()
-
-		p.MP-=mpCost
-		p.updateMP()
-
-		p.learnSpell(spellName)
-
-		overlays+=image('attacks.dmi', icon_state = "heal")
-
-		var/list/removeOverlays
-
-		if(SWORD_NURSE in p.passives)
-
-			removeOverlays = list()
-			for(var/mob/Player/other in range(2))
-				if(other == p) continue
-				other.HP = other.MHP
-
-				if(percent > 0)
-					other.Shield = round(p.MHP * (percent / 100), 1)
-
-				other.updateHP()
-
-				removeOverlays += other
-
-				other.overlays+=image('attacks.dmi', icon_state = "heal")
-
+	if(canUse(src,cooldown=/StatusEffect/UsedEpiskey,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=null,mpreq=0,againstocclumens=1))
+		hearers()<<"<font color=red><b>[usr]:</font></b> <font color=aqua>Episkey!"
+		new /StatusEffect/UsedEpiskey(src,15)
+		usr.HP=usr.MHP+usr.extraMHP
+		usr.updateHPMP()
+		usr.overlays+=image('Heal.dmi')
 		sleep(10)
-
-		usr.overlays-=image('attacks.dmi', icon_state = "heal")
-
-		if(removeOverlays)
-			for(var/mob/Player/other in removeOverlays)
-				other.overlays-=image('attacks.dmi', icon_state = "heal")
-
-
-mob/Spells/verb/Confundus(mob/Player/M in oview())
+		hearers()<<"<font color=aqua>[usr] heals \himself."
+		usr.overlays-=image('Heal.dmi')
+		usr.updateHPMP()
+mob/Spells/verb/Confundus(mob/Player/M in oview()&Players)
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 400
-	var/spellName = "Confundus"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedAnnoying,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=mpCost,againstocclumens=1))
-		new /StatusEffect/UsedAnnoying(src,40*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		hearers()<<"<b><span style=\"color:red;\">[usr]:</b></span> <font color= #7CFC00>Confundus, [M]!"
-		p.MP-=mpCost
-		p.updateMP()
-		p.learnSpell("Confundus")
-		M << errormsg("You feel confused...")
-
-		var/matrix/m = M.Interface.mapplane.transform
-		m.Turn(90 * rand(-2, 2))
-		m.Scale(1.25,1.25)
-		M.client.screen += M.Interface.mapplane
-		animate(M.Interface.mapplane, transform = m, time = 10)
-
-		src=null
-		spawn(200)
-			if(M)
-				animate(M.Interface.mapplane, transform = null, time = 10)
-				sleep(11)
-				if(M) M.client.screen -= M.Interface.mapplane
-
-mob/Spells/verb/Flippendo()
+	if(canUse(src,cooldown=null,needwand=1,inarena=0,insafezone=1,inhogwarts=1,target=M,mpreq=30,againstocclumens=1))
+		hearers()<<"<b><font color=red>[usr]:</b></font> <font color= #7CFC00>Confundus, [M]!"
+		usr.MP-=30
+		usr.updateMP()
+		usr:learnSpell("Confundus")
+		sleep(1)
+		if(M.confused>0)
+			M.confused = 20
+			M << "<font color = #A2A4A4><small>You feel more confused...</small></font>"
+		else
+			M.confused = 20
+			M << "<font color = #A2A4A4><small>You feel confused...</small></font>"
+			src = null
+			spawn()
+				while(M.confused>0)
+					if(M.confused == 1|| M.confused == 0)M << "<font color = #A2A4A4><small>You shake off your confusion.</small></font>"
+					M.confused--
+					sleep(10)
+mob/Spells/verb/Anteoculatia(mob/M in view()&Players)
+	set category = "Spells"
+	set name = "Anteoculatia"
+	hearers()<<"<font color = red><b>[usr]</font></b> : <font color=#BDCABB><b>Anteoculatia, [M]!"
+	sleep(20)
+	M.overlays+=('antlers.dmi')
+	usr.MP-=250
+	usr.updateMP()
+	hearers()<<"[M] begins to sprout antlers from their head!"
+	M<<"[src] has placed a hex on you! You've temporarily grown antlers!"
+	usr:learnSpell("Anteoculatia")
+	src = null
+	spawn(1800)
+		if(M)
+			M.overlays-=('antlers.dmi')
+			M<<"The antlers disintegrate back inside your skull. Aren't you glad that's over?!"
+mob/Spells/verb/Crucio(mob/M in oview()&Players)
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 10
-	var/spellName = "Flippendo"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=null,needwand=1,inarena=1,insafezone=1,target=null,mpreq=mpCost))
-		castproj(Type = /obj/projectile/Flippendo, MPreq = mpCost, icon_state = "flippendo", name = spellName)
-
+	if(canUse(src,cooldown=/StatusEffect/UsedCrucio,needwand=1,inarena=0,insafezone=0,target=M,mpreq=400))
+		hearers()<<"<b><font color=red>[usr]:</b></font> <font color= #7CFC00>Crucio!"
+		new /StatusEffect/UsedCrucio(src,15)
+		//var/obj/S=new/obj/Crucio  //MAIN CRUCIO
+		M.overlays+=image(icon='attacks.dmi',icon_state="newcrucio")
+		usr.MP-=400
+		usr.updateMP()
+		sleep(1)
+		hearers()<<"[M] cringes in pain!"
+		M.HP-=500
+		M.Death_Check()
+		sleep(20)
+		M.overlays-=image(icon='attacks.dmi',icon_state="newcrucio")
+		usr:learnSpell("Crucio")
 mob/Spells/verb/Wingardium_Leviosa()
 	set category="Spells"
 	if(!Wingardiumleviosa)
@@ -2046,7 +1810,6 @@ mob/Spells/verb/Wingardium_Leviosa()
 				hearers(client.view)<<"<B>[usr.name]: <I>Wingardium Leviosa.</I>"
 				other.overlays += new /obj/overlay/flash
 				usr:learnSpell("Wingardium Leviosa")
-				if(!istype(other, /obj/items/)) other.backToPos(other.loc)
 				src=null
 				spawn()
 					var/seconds = 60
@@ -2066,7 +1829,7 @@ mob/Spells/verb/Wingardium_Leviosa()
 		wingobject=null
 		Wingardiumleviosa = null
 
-mob/Spells/verb/Imperio(mob/Player/other in oview())
+mob/Spells/verb/Imperio(mob/other in oview()&Players)
 	set category="Spells"
 	if(!Imperio)
 
@@ -2097,27 +1860,13 @@ mob/Spells/verb/Imperio(mob/Player/other in oview())
 		usr.client.perspective=MOB_PERSPECTIVE
 mob/Spells/verb/Portus()
 	set category="Spells"
-
-	var/mob/Player/p = src
-	var/mpCost = 50
-	var/spellName = "Portus"
-
-	var/uses = (spellName in p.SpellUses) ? p.SpellUses[spellName] : 1
-	var/tier = round(log(10, uses)) - 1
-	mpCost = round(mpCost * (100 - tier*2) / 100, 1)
-
-	if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=mpCost,antiTeleport=1,useTimedProtection=1))
+	if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=25,antiTeleport=1))
 
 		if(IsInputOpen(src, "Portus"))
 			del _input["Portus"]
 
 		var/Input/popup = new (src, "Portus")
-		var/locations = list("Hogsmeade", "Hogwarts Courtyard", "The Dark Forest Entrance")
-
-		if(tier > 1) locations += "Diagon Alley"
-		if(tier > 2) locations += "Pixie Pit"
-		if(tier > 3) locations += "Enchanter"
-
+		var/locations = list("Hogsmeade", "Pixie Pit", "The Dark Forest Entrance")
 		var/d = popup.InputList(src, "Create a Portkey to Where?", "Portus Charm", locations[1], locations)
 		del popup
 
@@ -2130,52 +1879,9 @@ mob/Spells/verb/Portus()
 					if(A.density && !ismob(A))
 						src << errormsg("Portus can't be used on top of something else.")
 						return
-				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=mpCost,useTimedProtection=1))
-					var/obj/target = locate("@Hogsmeade")
-					var/obj/portkey/P1 = new(loc)
-					var/obj/portkey/P2 = new(target.loc)
-					P1.partner = P2
-					P2.partner = P1
-			if("Hogwarts Courtyard")
-				if(src.loc.density)
-					src << errormsg("Portus can't be used on top of something else.")
-					return
-				for(var/atom/A in src.loc)
-					if(A.density && !ismob(A))
-						src << errormsg("Portus can't be used on top of something else.")
-						return
-				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=mpCost,useTimedProtection=1))
-					var/obj/target = locate("@Courtyard")
-					var/obj/portkey/P1 = new(loc)
-					var/obj/portkey/P2 = new(target.loc)
-					P1.partner = P2
-					P2.partner = P1
-			if("The Dark Forest Entrance")
-				if(src.loc.density)
-					src << errormsg("Portus can't be used on top of something else.")
-					return
-				for(var/atom/A in src.loc)
-					if(A.density && !ismob(A))
-						src << errormsg("Portus can't be used on top of something else.")
-						return
-				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=mpCost,useTimedProtection=1))
-					var/obj/target = locate("@Forest")
-					var/obj/portkey/P1 = new(loc)
-					var/obj/portkey/P2 = new(target.loc)
-					P1.partner = P2
-					P2.partner = P1
-			if("Diagon Alley")
-				if(src.loc.density)
-					src << errormsg("Portus can't be used on top of something else.")
-					return
-				for(var/atom/A in src.loc)
-					if(A.density && !ismob(A))
-						src << errormsg("Portus can't be used on top of something else.")
-						return
-				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=mpCost,useTimedProtection=1))
-					var/obj/target = locate("@DiagonAlley")
-					var/obj/portkey/P1 = new(loc)
-					var/obj/portkey/P2 = new(target.loc)
+				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=25))
+					var/obj/portkey/P1 = new(src.loc)
+					var/obj/portkey/P2 = new(locate(40,80,18))
 					P1.partner = P2
 					P2.partner = P1
 			if("Pixie Pit")
@@ -2186,13 +1892,12 @@ mob/Spells/verb/Portus()
 					if(A.density && !ismob(A))
 						src << errormsg("Portus can't be used on top of something else.")
 						return
-				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=mpCost,useTimedProtection=1))
-					var/obj/target = locate("@Pixie Pit")
-					var/obj/portkey/P1 = new(loc)
-					var/obj/portkey/P2 = new(target.loc)
+				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=25))
+					var/obj/portkey/P1 = new(src.loc)
+					var/obj/portkey/P2 = new(locate(86,26,15))
 					P1.partner = P2
 					P2.partner = P1
-			if("Enchanter")
+			if("The Dark Forest Entrance")
 				if(src.loc.density)
 					src << errormsg("Portus can't be used on top of something else.")
 					return
@@ -2200,1122 +1905,42 @@ mob/Spells/verb/Portus()
 					if(A.density && !ismob(A))
 						src << errormsg("Portus can't be used on top of something else.")
 						return
-				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=mpCost,useTimedProtection=1))
-					var/obj/target = locate(" wisp enchanter")
-					var/obj/portkey/P1 = new(loc)
-					var/obj/portkey/P2 = new(target.loc)
+				if(canUse(src,cooldown=/StatusEffect/UsedPortus,needwand=1,inarena=0,insafezone=1,inhogwarts=0,target=null,mpreq=25))
+					var/obj/portkey/P1 = new(src.loc)
+					var/obj/portkey/P2 = new(locate(95,11,16))
 					P1.partner = P2
 					P2.partner = P1
 			if(null)
 				return
-		new /StatusEffect/UsedPortus(src,30*(usr:cooldownModifier+usr:extraCDR)*worldData.cdrModifier)
-		hearers()<<"[usr]: <span style=\"color:aqua;\"><font size=2>Portus!</span>"
+		new /StatusEffect/UsedPortus(src,30)
+		hearers()<<"[usr]: <font color=aqua><font size=2>Portus!</font>"
 		hearers()<<"A portkey flys out of [usr]'s wand, and opens."
-		p.MP-=mpCost
-		p.updateMP()
-		p.learnSpell("Portus")
-mob/Spells/verb/Sense(mob/Player/M in view())
+	/*	for(var/mob/Player/C in world)
+			if(C.House=="Ministry")
+				C<<"[usr] Created Portus to [d]</font>"*/
+		usr.MP-=25
+		usr.updateMP()
+		usr:learnSpell("Portus")
+mob/Spells/verb/Sense(mob/M in view()&Players)
 	set category = "Spells"
 	if(canUse(src,cooldown=null,needwand=0,inarena=1,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=0))
 		hearers() << "[usr]'s eyes flicker."
 		usr<<errormsg("[M.name]'s Kills: [M.pkills]<br>[M.name]'s Deaths: [M.pdeaths]")
 		usr:learnSpell("Sense")
-mob/Spells/verb/Scan(mob/Player/M in view())
+mob/Spells/verb/Scan(mob/M in view()&Players)
 	set category = "Spells"
 	if(canUse(src,cooldown=null,needwand=0,inarena=1,insafezone=1,inhogwarts=1,target=M,mpreq=0,againstocclumens=0))
 		hearers() << "[usr]'s eyes glint."
-		var/mob/Player/p = src
-		if((p.Dmg)>=1000)
-			p<<"\n<b>[M.name]'s Max HP:</b> [M.MHP] - <b>Current HP:</b> [M.HP]<br><b>[M.name]'s Max MP:</b> [M.MMP] - <b>Current MP:</b> [M.MP]"
+		if((usr.Dmg+usr.extraDmg)>=1000)
+			usr<<"\n<b>[M.name]'s Max HP:</b> [M.MHP+M.extraMHP] - <b>Current HP:</b> [M.HP]<br><b>[M.name]'s Max MP:</b> [M.MMP+M.extraMMP] - <b>Current MP:</b> [M.MP]"
 		else
-			p<<"\n<b>[M.name]'s Max HP:</b> [M.MHP]<br><b>[M.name]'s Max MP:</b> [M.MMP]"
-		p.learnSpell("Scan")
-
-mob/Spells/verb/Inferius()
-	set category = "Spells"
-
-	if(canUse(src,cooldown=/StatusEffect/Summoned,needwand=1,inarena=0,insafezone=0,inhogwarts=0,target=null,mpreq=0,againstocclumens=1))
-		var/mob/Player/p = src
-
-		var/limit = 1 + p.extraLimit + round(p.Summoning.level / 10)
-
-		if(p.summons >= limit)
-			p << errormsg("You need higher summoning level to summon more.")
-			return
-
-		new /StatusEffect/Summoned(src,15*(p.cooldownModifier+p.extraCDR)*worldData.cdrModifier)
-
-		hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=silver> Inferius!"
-
-		for(var/obj/corpse/c in view(15, src))
-			if(c.gold == -1 || c.revive == 1) continue
-
-			c.revive = 1
-			animate(c, transform = null, alpha = 255, time = 10)
-
-			sleep(10)
-			var/obj/summon/corpse/s = new  (c.loc, src, "Inferius")
-			c.loc = null
-			s.appearance = c.appearance
-			s.dir = c.dir
-
-			if(c.gold >= 0 && c.gold != null)
-				if(c.gender == FEMALE)
-					s.icon = 'FemaleVampire.dmi'
-				else
-					s.icon = 'MaleVampire.dmi'
-
-			if(!p.Summons || p.Summons.len >= limit) break
-
-mob/Spells/verb/Inferius_Maxima()
-	set category = "Spells"
-
-	if(canUse(src,needwand=0))
-
-		hearers()<<"<b><span style=\"color:red;\">[usr]</b></span>: <b><font size=3><font color=silver> Inferius Maxima!"
-
-		for(var/obj/corpse/c in view(15, src))
-			if(c.gold == -1 || c.revive == 1) continue
-
-			if(c.owner && isplayer(c.owner))
-				c.revive = 1
-				animate(c, transform = null, alpha = 255, time = 10)
-				sleep(10)
-				if(c.owner)
-					c.owner << infomsg("[usr] resurrected you.")
-					var/gold/g = new(bronze=c.gold)
-					g.give(c.owner)
-					c.owner:Transfer(c.loc)
-					c.owner.dir = c.dir
-					c.loc = null
-					c.owner = null
+			usr<<"\n<b>[M.name]'s Max HP:</b> [M.MHP+M.extraMHP]<br><b>[M.name]'s Max MP:</b> [M.MMP+M.extraMMP]"
+		usr:learnSpell("Scan")
+mob/var/Zitt
 
 var/safemode = 1
-mob/var/tmp
-	lastproj = 0
-	lastHostile = 0
-mob
-	proc/castproj(Type = /obj/projectile, MPreq = 0, icon = 'attacks.dmi', icon_state = "", damage = 0, name = "projectile", cd = 2, lag = 2, element = 0, Loc = loc, Dir = dir)
-		if(cd && (world.time - lastproj) < cd && !inOldArena()) return
-		if(!loc) return
-		lastproj = world.time
+mob/var/tmp/lastproj = 0
 
-		damage *= loc.loc:dmg
-		damage = round(damage)
-
-		if(damage > 0)
-			lastHostile = world.time
-
-		var/obj/projectile/P = new Type (Loc,Dir,src,icon,icon_state,damage,name,element)
-		P.shoot(lag)
-		. = P
-		if(client)
-
-			var/mob/Player/p = src
-
-			if(SWORD_MANA in p.passives)
-				var/dmg = round(p.MMP * 1)
-				var/cost = round(dmg * 0.5, 1)
-
-				if(cd == 0)
-					P.damage = 10 + dmg + rand(0, 10)
-					p.MP = 0
-				else if(p.MP >= cost)
-					P.damage = 10 + dmg + rand(0, 10)
-					p.MP -= cost
-				else
-					P.damage = 10 + p.MP*2 + rand(0, 10)
-					p.MP = 0
-				lag -= 1
-				P.shoot(lag)
-
-			else
-				p.MP -= MPreq
-			p.updateMP()
-
-			if(SHIELD_CLOWN in p.passives)
-				P.selfDamage = 0
-
-			if(SWORD_GHOST in p.passives)
-				if(P.element == GHOST)
-					P.damage *= 1.2
-				else
-					P.element = GHOST
-
-			if(RING_CLOWN in p.passives)
-				P.element = pick(GHOST,FIRE,WATER,EARTH)
-
-			if(p.wand)
-				if(cd != 0) p.learnSpell(name)
-
-
-				if(!P.color)
-					var/c
-					if(p.holster && p.holster.projColor)
-
-						if(p.holster.projColor == "random")
-							c = pick(p.holster.colors)
-						else
-							c = p.holster.projColor
-					else if(p.wand.projColor)
-						c = p.wand.projColor
-
-					if(c)
-						if(c == "blood")
-							P.color      = "#16d0d0"
-							P.blend_mode = BLEND_SUBTRACT
-						else
-							P.color = list(c, c, c)
-
-
-			if((SWORD_CLOWN in p.passives) && cd != 0)
-				P.dir = pick(DIRS_LIST)
-				P.shoot(lag)
-
-				var/dir2 = pick(DIRS_LIST-P.dir)
-
-				var/obj/projectile/P2 = new Type (Loc,dir2,src,icon,icon_state,P.damage,name,P.element)
-				P2.shoot(lag)
-				P2.appearance = P.appearance
-
-atom/movable/proc
-	Attacked(obj/projectile/p)
-
-	Dispose()
-		loc = null
-
-
-obj/egg
-	Attacked()
-		Hit()
-
-obj/clanpillar
-
-	Attacked(obj/projectile/p)
-		if(density)
-			HP -= 1
-			flick("[clan]-V", src)
-			Death_Check(p.owner)
-
-obj/brick2door
-	Attacked(obj/projectile/p)
-		if(density)
-			Take_Hit(p)
-
-area/var
-	friendlyFire = TRUE
-	timedProtection = FALSE
-	selfDamage = TRUE
-	scaleDamage = 0
-
-
-mob/Player/var/element
-	Fire
-	Water
-	Earth
-	Ghost
-	Gathering
-	Taming
-	Alchemy
-	Slayer
-	Animagus
-	Summoning
-	Spellcrafting
-	TreasureHunting
-
-element
-	var
-		name
-		level = 0
-		exp = 0
-		maxExp = 4000
-
-
-		const
-			MAX  = 50 // soft cap
-
-	New(n)
-		name = n
-		..()
-
-	proc
-		add(amount, mob/Player/parent, msg=0)
-
-			if(level >= MAX)
-				amount *= max(1 - (level - MAX) / MAX, 0.1)
-
-				var/r = (level - MAX)*10
-				if(amount > r)
-					amount -= r
-				else if(amount > 10)
-					amount = 10
-
-			if(amount < 10) return
-			amount = round(amount/10, 1)
-
-			exp += amount
-		//	if(msg)
-		//		parent << infomsg("You gained [amount] [name] experience.")
-			parent.expAlert("[name] +[amount]", name)
-
-			while(exp > maxExp)
-				exp -= maxExp
-				level++
-				maxExp = 4000 + (level * 4000)
-
-				parent.screenAlert("[name] leveled up to [level]!")
-
-		adjustExp()
-			for(var/i = 0 to level-1)
-				exp += 2000 + (i * 2500)
-
-			level = 0
-			maxExp = 4000
-
-			while(exp > maxExp)
-				exp -= maxExp
-				level++
-				maxExp = 4000 + (level * 4000)
-
-
-mob/Player
-	var/tmp/lastCombat = -COMBAT_TIME
-	proc/onDamage(dmg, mob/attacker, triggerSummons=1)
-
-		if(loginProtection)
-			dmg = 0
-			return 0
-
-		if((SHIELD_NINJA in passives) && prob(24 + passives[SHIELD_NINJA]))
-			dmg = 0
-
-			var/turf/t = get_step(attacker, turn(attacker.dir, 180))
-			Move(t)
-			dir = get_dir(src, attacker)
-
-			return 0
-
-		if((SHIELD_MP in passives) && MP < MMP)
-			var/regen = round(dmg * 0.5, 1)
-			MP = min(MP + regen, MMP)
-			updateMP()
-
-		if(ismonster(attacker))
-			if(monsterDef > 0)
-				dmg *= 1 - min(monsterDef/100, 0.75)
-
-		if(SHIELD_MPDAMAGE in passives)
-			var/r = min(round(dmg * (0.4 + ((passives[SHIELD_MPDAMAGE] - 1) / 100)), 1), MP)
-			dmg -= r
-			MP -= r
-			updateMP()
-
-		if(usedSpellbook && (usedSpellbook.flags & PAGE_DAMAGETAKEN))
-			usedSpellbook.cast(src, attacker)
-
-		dmg = round(dmg, 1)
-
-		if(Shield > 0)
-			Shield = Shield - dmg
-			if(Shield <= 0)
-				dmg = abs(Shield)
-				Shield = 0
-			else
-				dmg = 0
-
-		if((RING_NURSE in passives) && HP - dmg <= 0)
-			usr = src
-			usr:Episky()
-
-			if(!findStatusEffect(/StatusEffect/DodgedDeath))
-				dmg = 0
-				new /StatusEffect/DodgedDeath(src, 50)
-
-		HP -= dmg
-		updateHP()
-
-
-		if(triggerSummons && attacker != src)
-			for(var/obj/summon/s in Summons)
-				if(!s.target)
-					s.target = attacker
-
-		return dmg
-
-
-	Attacked(obj/projectile/p, isReflected=0)
-		..()
-
-		if(p.element == HEAL)
-
-			HP = min(HP + p.damage, MHP)
-			updateHP()
-
-			p.owner << "Your [p] heals [src] for [p.damage]."
-			src << "[p.owner] heals you for [p.damage]."
-			return src
-
-		var/area/a = loc.loc
-		if(p.owner)
-
-			if(a.timedProtection && (lastHostile == 0 || world.time - lastHostile > 600)) return
-
-			if(isplayer(p.owner))
-
-				if(p.owner == src && !isReflected && (!p.selfDamage || !a.selfDamage)) return
-
-				if(!a.friendlyFire) return
-
-				if(party && (p.owner in party.members)) return
-
-				if(src != p.owner)
-					lastCombat = world.time
-					p.owner:lastCombat = world.time
-
-		var/dmg = p.damage
-
-		if(p.element == FIRE)
-			dmg -= round(Fire.level / 2)
-
-		else if(p.element == WATER)
-			dmg -= round(Water.level / 2)
-
-		else if(p.element == EARTH)
-			dmg -= round(Earth.level / 2)
-
-		else if(p.element == GHOST)
-			dmg -= round(Ghost.level / 2)
-
-		if(dmg <= 0) return
-
-		if(a.scaleDamage && p.owner != src)
-			dmg = round(MHP / a.scaleDamage, 1)
-
-		dmg = onDamage(dmg, p.owner)
-
-		p.owner << "Your [p] does [dmg] damage to [src]."
-
-		if(MonsterMessages || !ismonster(p.owner))
-			src << "[p.owner] hit you for [dmg] with their [p]."
-
-		if(p.canBleed)
-			var/n = dir2angle(get_dir(src, p))
-			emit(loc    = src,
-				 ptype  = /obj/particle/fluid/blood,
-			     amount = 4,
-			     angle  = new /Random(n - 25, n + 25),
-			     speed  = 2,
-			     life   = new /Random(15,25))
-
-		if(HP <= 0)
-			if(isplayer(p.owner))
-				p.owner:learnSpell(p.name, 300)
-				Death_Check(p.owner)
-
-				if(SWORD_HEALONKILL in p.owner:passives)
-					p.owner.HP = min(round(p.owner.HP + MHP*(0.20 + ((p.owner:passives[SWORD_HEALONKILL] - 1) / 100)), 1), p.owner.MHP)
-					p.owner:updateHP()
-
-			else if(ismonster(p.owner))
-				p.owner:Kill(src)
-			else
-				Death_Check(src)
-
-		return src
-
-mob/Enemies
-	var/canBleed = TRUE
-	var/tmp/dead = 0
-	var/element
-
-	proc/onDamage(dmg, mob/Player/p, elem = 0)
-
-		if(dead) return 0
-
-		dmg = round(dmg, 1)
-		HP -= dmg
-
-		if(HP <= 0)
-			dead = 1
-			var/restoreBleed = FALSE
-			if(p && (SWORD_EXPLODE in p.passives))
-				if(canBleed)
-					canBleed = FALSE
-					restoreBleed = TRUE
-
-				var/c = color
-				if(elem != 0)
-					if(elem == FIRE) c = "#c60"
-					else if(elem == WATER) c = "#0bc"
-					else if(elem == EARTH) c = "#8b4513"
-					else if(elem == GHOST) c = "#ff69b4"
-
-				var/obj/projectile/proj = new
-				proj.element = elem
-				proj.damage = round(dmg*(0.74 + p.passives[SWORD_EXPLODE] / 100), 1)
-				proj.owner = p
-				proj.name = "[name]'s explosion"
-				proj.selfDamage = 0
-
-				var/obj/o = new /obj/custom { canSave = 0; icon = 'Effects.dmi'; icon_state = "explode" } (loc)
-				o.color = list(c, c, c)
-				o.transform = turn(matrix()*(1.25 + (rand(0, 25) / 100)), 90 * rand(0, 3))
-				spawn(6)
-					o.loc = null
-
-				for(var/mob/Enemies/a in range(2, loc))
-					if(a==src) continue
-					if(a.HP > 0)
-						if(a.canBleed)
-							a.canBleed = FALSE
-							a.Attacked(proj, 1)
-							a.canBleed = TRUE
-						else
-							a.Attacked(proj, 1)
-
-
-			Death_Check(p)
-
-			if(restoreBleed)
-				canBleed = TRUE
-
-			if(SWORD_HEALONKILL in p.passives)
-				p.HP = min(round(p.HP + MHP*(0.15 + ((p.passives[SWORD_HEALONKILL] - 1) / 100)), 1), p.MHP)
-				p.updateHP()
-
-			var/exp2give  = (rand(6,14)/10)*Expg
-
-			if(p.level > src.level && !p.hardmode)
-				exp2give  -= exp2give  * ((p.level-src.level)/150)
-
-				if(exp2give <= 0) return 1
-
-			if(p.House == worldData.housecupwinner)
-				exp2give  *= 1.5
-
-			var/StatusEffect/Lamps/Exp/exp_rate   = p.findStatusEffect(/StatusEffect/Lamps/Exp)
-
-			if(exp_rate)  exp2give  *= exp_rate.rate
-
-			if(elem != 0)
-
-				if(elem == FIRE) p.Fire.add(exp2give, p)
-
-				else if(elem == WATER) p.Water.add(exp2give, p)
-
-				else if(elem == EARTH) p.Earth.add(exp2give, p)
-
-				else if(elem == GHOST) p.Ghost.add(exp2give, p)
-
-			return exp2give
-
-		if(hpbar)
-			var/percent = HP / (MHP * (1 + hardmode))
-			hpbar.Set(percent, src)
-
-		return 0
-
-
-	Attacked(obj/projectile/p, silent=0)
-
-		if(isplayer(p.owner) && p.element != HEAL)
-
-			var/dmg = p.damage + p.owner:Slayer.level
-
-			if(p.owner:monsterDmg > 0)
-				dmg *= 1 + p.owner:monsterDmg/100
-
-			if(p.icon_state == "blood")
-				dmg += round(p.damage / 10, 1)
-			else if(element && p.element)
-				if(element == p.element)
-					dmg -= round(p.damage / 10, 1)
-
-				else if(element == FIRE && p.element == WATER)
-					dmg += round(p.damage / 2, 1)
-
-				else if((element & (EARTH|FIRE)) && (p.element & (WATER|GHOST)))
-					dmg += round(p.damage / 10, 1)
-
-				else if((element & WATER))
-					if(p.element & EARTH)
-						dmg += round(p.damage / 10, 1)
-					else if(p.element & FIRE)
-						dmg += round(p.damage / 2, 1)
-
-			if(canBleed && p.canBleed)
-				var/n = dir2angle(get_dir(src, p))
-				emit(loc    = src,
-					 ptype  = /obj/particle/fluid/blood,
-				     amount = 4,
-				     angle  = new /Random(n - 25, n + 25),
-				     speed  = 2,
-				     life   = new /Random(15,25))
-
-			if(SWORD_NINJA in p.owner:passives)
-				var/angleDiff = abs(dir2angle(p.owner.dir) - dir2angle(dir))
-
-				if(angleDiff <= 45)
-					dmg *= 1.5
-				else if(angleDiff <= 90)
-					dmg *= 1.25
-
-			dmg = round(dmg, 1);
-
-			if(p.owner:MonsterMessages && !silent)
-				p.owner << "Your [p] does [dmg] damage to [src]."
-
-			var/exp2give = onDamage(dmg, p.owner, p.element)
-			if(exp2give > 0)
-
-				p.owner:learnSpell(p.name, 30)
-			else
-				for(var/obj/summon/s in p.owner:Summons)
-					if(!s.target)
-						s.target = src
-
-			..()
-
-obj
-	projectile
-		layer = 4
-		density = 1
-		icon = 'attacks.dmi'
-		var
-			velocity = 0
-			const/MAX_VELOCITY = 10
-			life = 20
-			damage = 0
-			element = 0
-
-			steps = 0
-			impact = 1
-			selfDamage = 1
-			canBleed = 1
-
-		Move()
-			.=..()
-
-			steps++
-
-			for(var/atom/movable/a in loc)
-				if(a == src) continue
-
-				if(!a.density && (isplayer(a) || istype(a, /mob/Enemies)))
-					Bump(a)
-				else if(damage && istype(a, /obj/portkey) && a:canDamage)
-					Bump(a)
-
-		New(loc,dir,mob/mob,icon,icon_state,damage,name,element)
-			..()
-
-			src.element = element
-			src.dir = dir
-			src.icon = icon
-			src.icon_state = icon_state
-			src.damage = damage
-			src.owner = mob
-			src.name = name
-
-			spawn(life)
-				Dispose()
-
-		Dispose()
-			walk(src,0)
-			..()
-		proc
-			Impact(atom/movable/a, turf/oldloc)
-				var/effect = TRUE
-				. = 1
-				if(istype(a, /obj/projectile))
-					. = a:velocity >= velocity
-
-					effect = a:owner != owner && .
-
-				if(effect && (!damage || !ismob(a)))
-					var/particle
-					var/c
-
-					switch(icon_state)
-						if("snowball")
-							particle = /obj/particle/fluid/snow
-						if("iceball")
-							particle = /obj/particle/smoke/proj
-							c = "#0bc"
-						if("avada")
-							particle = /obj/particle/smoke/proj
-							c = "#0b0"
-						if("fireball")
-							particle = /obj/particle/smoke/proj
-							c = "#c60"
-						if("gum")
-							particle = /obj/particle/smoke/proj
-							c = "#ff69b4"
-						if("flippendo","potion")
-							particle = /obj/particle/smoke
-						if("quake")
-							particle = /obj/particle/smoke/proj
-							c = "#8b4513"
-						if("blood")
-							particle = /obj/particle/fluid/blood
-							color = null
-
-					if(particle)
-
-						if(!oldloc) oldloc = isturf(a) ? a : a.loc
-						if(!oldloc) oldloc = loc
-
-						var/n = dir2angle(get_dir(oldloc, src))
-
-						if(blend_mode == BLEND_SUBTRACT)
-							color = null
-							c     = "#c00"
-
-						emit(loc    = oldloc,
-							 ptype  = particle,
-						     amount = 4,
-						     angle  = new /Random(n - 25, n + 25),
-						     speed  = 2,
-						     life   = new /Random(15,20),
-						     color  = color ? color : c)
-
-			Effect(atom/movable/a)
-
-		Attacked(obj/projectile/p)
-
-			if(p.owner != owner)
-				if(Impact(p))
-					Dispose()
-
-		proc
-			shoot(lag=2)
-				velocity = MAX_VELOCITY - lag
-				lag = max(1, lag)
-				glide_size = 32/lag
-				walk(src, dir, lag)
-
-		Bump(atom/movable/a)
-			var/turf/t    = isturf(a.loc) ? a.loc : a
-			if(!t || istype(t, /turf/nofirezone)) return
-
-			var/oldSystem = inOldArena()
-			if(oldSystem && !istype(a, /mob)) return
-
-			if(a.density && owner == a && !steps)
-				loc = a.loc
-				steps++
-				return
-
-			var/count = 0
-			for(var/atom/movable/O in t)
-				if(O.invisibility >= 2) continue
-				if(O.reflect)
-					Effect(owner)
-					if(damage)
-						damage = round(O.reflect * damage, 1)
-						owner.Attacked(src, 1)
-				else
-					Effect(O)
-					if(damage)
-						O.Attacked(src)
-				count++
-
-			if(Impact(a, t) || (count > 1 && impact))
-				Dispose()
-
-		Blood
-			New()
-				..()
-
-				color      = "#08ffff"
-				blend_mode = BLEND_SUBTRACT
-
-		Meteor
-			density    = 0
-			icon       = 'dot.dmi'
-			icon_state = "circle"
-			color      = "#8A0707"
-			alpha      = 20
-			appearance_flags = PIXEL_SCALE
-			canBleed   = 0
-			selfDamage = 0
-
-			var
-				range = 3
-
-			New(Loc,mob/mob,damage,iconstate,name,element)
-				set waitfor = 0
-				src.loc=Loc
-				src.element = element
-				src.damage = damage
-				src.owner = mob
-				src.name = name
-
-		//		sleep(1)
-				var/matrix/m = matrix()
-				m.Scale(range + 0.5, range)
-
-				animate(src,  alpha = 100, transform = m, time = 4)
-
-				sleep(7)
-
-				var/obj/dropObj/o = new(loc)
-				o.icon_state = iconstate
-
-				var/d = rand(0,2)
-				if(d == 1)
-					o.pixel_x = -80
-					m.Turn(-45)
-					o.transform = m
-				else if(d == 2)
-					o.pixel_x = 80
-					m.Turn(45)
-					o.transform = m
-				else
-					o.transform = m
-
-				animate(o, pixel_y = 0, pixel_x = 0, time = 5)
-
-				sleep(5)
-
-				for(var/atom/movable/a in range((range-1)/2, loc))
-					a.Attacked(src)
-
-				loc = null
-				o.loc = null
-		Avada
-
-			Effect(atom/movable/a)
-
-				if(owner && isplayer(a))
-					var/mob/Player/p = a
-
-					if(p.HP < p.MHP * 0.3)
-						emit(loc    = p.loc,
-							 ptype  = /obj/particle/smoke/proj,
-						     amount = 28,
-						     angle  = new /Random(0, 360),
-						     speed  = 2,
-						     life   = new /Random(20,35),
-						     color  = "#0c0")
-
-						damage = p.MHP
-
-						owner.HP = min(round(owner.HP + p.MHP*0.3, 1), owner.MHP)
-						owner:updateHP()
-
-					else
-						damage = 0
-						var/dmg = owner:onDamage(owner.MHP * 0.3, p)
-						owner << infomsg("[p] soul wasn't weakened enough, you took [dmg] damage!")
-						owner:Death_Check(p)
-
-
-
-
-		Lumos
-			New()
-				..()
-
-				overlays += /obj/light
-
-				animate(src, transform = matrix() * 3.2, time = 10, loop = -1)
-				animate(     transform = matrix() * 3.3, time = 10)
-
-			Dispose()
-				density = 0
-				walk(src, 0)
-
-				sleep(600)
-
-				..()
-
-		Bomb
-			var/tmp/mob/dontHit
-			Effect(atom/movable/a)
-				if(isobj(a))
-					var/obj/o = a
-					if(o.rubbleable && !o.rubble)
-						o.picon = o.icon
-						o.pname = o.name
-						o.piconstate = o.icon_state
-						o.name = "Pile of Rubble"
-						o.icon = 'rubble.dmi'
-						o.icon_state = ""
-						o.rubble = 1
-						o.density = 0
-				else
-					dontHit = a
-
-
-			Dispose()
-
-				for(var/mob/M in orange(1, src))
-					if(M == dontHit) continue
-					if(M == owner)
-						var/d = damage
-						damage = damage*0.5
-						M.Attacked(src)
-						damage = d
-					else
-						M.Attacked(src)
-
-				dontHit = null
-
-				emit(loc    = loc,
-					 ptype  = /obj/particle/smoke,
-				     amount = 5,
-				     angle  = new /Random(1, 359),
-				     speed  = 2,
-				     life   = new /Random(15,25),
-				     color  = null)
-
-				..()
-
-		Grav
-			life = 15
-
-			shoot()
-				..()
-				velocity+=100
-
-			New()
-				..()
-
-				blend_mode = BLEND_SUBTRACT
-
-				animate(src, color = rgb(rand(0,255), rand(0,255), rand(0,255)), time = 4, loop = -1)
-				for(var/i = 1 to 3)
-					animate(color = rgb(rand(0,255), rand(0,255), rand(0,255)), time = 5, loop = -1)
-
-			Dispose()
-				dir = SOUTH
-				density = 0
-				walk(src, 0)
-
-				var/const/DIST  = 2
-				var/const/TICKS = 15
-
-				light(src, DIST, TICKS)
-
-				for(var/t = TICKS to 0 step -1)
-					for(var/mob/Player/p in oview(DIST, src))
-						step_towards(p, src)
-
-					sleep(1)
-
-				var/b = FALSE
-				for(var/mob/Player/p in oview(DIST, src))
-					p.HP = 0
-					p.Death_Check(owner)
-					b = TRUE
-
-				if(b)
-					emit(loc    = loc,
-						 ptype  = /obj/particle/fluid/blood,
-					     amount = 125,
-					     angle  = new /Random(0, 360),
-					     speed  = 6,
-					     life   = new /Random(1,25))
-
-				..()
-
-		Flippendo
-
-			shoot(lag=2)
-				set waitfor = 0
-				velocity = MAX_VELOCITY - lag - 1
-
-				if(lag > 1)
-					var/obj/projectile/p = locate() in get_step(src, dir)
-					if(p && p.owner == owner && p.type != type)
-						step(src, dir)
-						sleep(lag)
-						if(!loc) return
-				walk(src, dir, lag)
-
-			Attacked(obj/projectile/p)
-
-				p.dir = turn(p.dir, pick(45, -45))
-				walk(p, p.dir, MAX_VELOCITY - p.velocity)
-
-				if(Impact(p))
-					Dispose()
-
-			Effect(atom/movable/a)
-
-				if(isplayer(a) || istype(a, /mob/Enemies))
-
-					owner << "Your [src] hit [a]!"
-
-					if(!a.findStatusEffect(/StatusEffect/Potions/Stone))
-						var/turf/t = get_step_away(a, src)
-						if(t && !(issafezone(a.loc.loc, 0) && !issafezone(t.loc, 0)))
-							a.Move(t)
-							a << "You were pushed backwards by [owner]'s Flippendo!"
-
-				else if(istype(a,/obj/projectile))
-					a.dir = turn(a.dir, pick(45, -45))
-					walk(a, a.dir, MAX_VELOCITY - a:velocity)
-
-		Potion
-			var
-				effect
-				seconds
-			Effect(atom/movable/a)
-
-				if(src.owner && isplayer(a))
-					var/mob/Player/p = a
-					owner << "Your [src] hit [p]!"
-
-					if(SHIELD_ALCHEMY in p.passives) return
-
-					var/StatusEffect/Potions/s = locate() in p.LStatusEffects
-					if(s)
-						owner << "[p] already is under the influence of a potion."
-						return
-
-					p << infomsg("[src] splashes on you.")
-					new effect (p, seconds, "Potion", src)
-
-
-
-		Transfiguration
-
-			Effect(atom/movable/a)
-
-				if(src.owner && isplayer(a))
-					var/mob/Player/p = a
-					owner << "Your [src] hit [a]!"
-
-					if(owner.CanTrans(p))
-						p.nofly()
-
-						flick("transfigure", p)
-						p.trnsed = 1
-						p.overlays = null
-						if(p.away) p.ApplyAFKOverlay()
-
-						p.icon       = 'Transfiguration.dmi'
-						p.icon_state = name
-
-						src.owner:learnSpell(name, 10)
-					else
-						src.owner:learnSpell(name, 5)
-
-		Bind
-			var/max_time
-			var/min_time
-			var/time
-
-			New()
-				..()
-
-				if(min_time)
-					time = min_time
-
-			Move()
-				..()
-
-				var/step = 20 / (MAX_VELOCITY - velocity)
-
-				time += (max_time - min_time) / step
-
-			Effect(atom/movable/a)
-
-				if(src.owner && isplayer(a))
-					var/mob/Player/p = a
-					owner << "Your [src] hit [a]!"
-
-
-					if(p.removeoMob)
-						p << errormsg("Your Permoveo spell failed.")
-						p.client.eye = p
-						p.client.perspective=MOB_PERSPECTIVE
-						p.removeoMob:ReturnToStart()
-						p.removeoMob:removeoMob = null
-						p.removeoMob = null
-
-					p << errormsg("You were hit by [owner]'s [name].")
-
-					p.nomove=1
-					if(!p.trnsed)
-						p.icon_state = icon_state
-						p.overlays   = null
-
-					src.owner:learnSpell(name, 10)
-
-					spawn()
-						var/t = round(time * 10)
-						while(p && p.nomove && t > 0)
-							t--
-							sleep(1)
-
-						if(p)
-							p.nomove = 0
-							if(!p.trnsed)
-								p.icon_state = ""
-								p.ApplyOverlays()
-
-		BurnRoses
-
-			Effect(atom/movable/a)
-				set waitfor = 0
-				if(istype(a, /obj/redroses))
-					var/obj/redroses/r = a
-					flick("burning", r)
-					if(!r.GM_Made)
-						sleep(4)
-						r.Dispose()
-				else if(istype(a, /obj/Torch_/Torch))
-					if(a.icon_state == "torch_off")
-						a:lit()
-
-		NoImpact
-			var/list/bumped
-			impact = 0
-			selfDamage = 0
-
-			Dir
-				Effect(atom/movable/a)
-					if(owner && (isplayer(a) || istype(a, /mob/Enemies)))
-						dir = pick(list(NORTH, SOUTH, EAST, WEST, NORTHEAST, NORTHWEST, SOUTHEAST, SOUTHWEST) - dir)
-						walk(src, dir, 2)
-
-
-			Impact(atom/movable/a, turf/oldloc)
-
-				if(ismonster(a) || isplayer(a))
-					loc = oldloc
-					. = 0
-				else
-					. = ..(a, oldloc)
-
-			Bump(atom/movable/a)
-
-				if(a == owner)
-					loc = a.loc
-					return
-
-				if(isplayer(a) || ismonster(a))
-					if(bumped)
-						if(a in bumped)
-							loc = a.loc
-							return
-					else
-						bumped = list()
-
-					bumped += a
-
-				.=..(a)
-
-			Effect(atom/movable/a)
-				if(owner && (isplayer(a) || istype(a, /mob/Enemies)))
-					var/mob/m = a
-					if(m.HP - damage <= 0 && prob(60))
-						var/list/dirs = list(NORTH, SOUTH, EAST, WEST, NORTHEAST, NORTHWEST, SOUTHEAST, SOUTHWEST)
-						for(var/d in dirs)
-							owner.castproj(Type = type, icon_state = icon_state, damage = round(damage/2), name = name, cd = 0, Loc = a.loc, Dir = d, element = element)
 
 obj/circle
 	icon = 'circle1.dmi'
@@ -3422,21 +2047,63 @@ obj/circle
 		xoffset = 2
 		yoffset = 2
 
+mob/var/tmp/mob/arcessoing = 0
+
+mob/var/tmp/silence
+mob/var/tmp/muff
+
 mob/Player/proc/OcclumensCounter()
-	set waitfor = 0
 	while(occlumens > 0)
-		occlumens--
 		sleep(10)
+		occlumens --
 	src << "Your Occlumency has worn off."
 	occlumens = 0
+mob/var/occlumens = 0
+mob/var/dance=0
 
-mob/var/tmp/mob/Player/arcessoing
-mob/Player/var/tmp
-	dance = 0
-	silence
-	muff
-	occlumens = 0
+mob/var/Immobile=0
+mob/var/IImmobile=0
+obj/Vanishing_Cabnet
+	icon='portal.dmi'
+	icon_state="portkey"
+	verb
+		Open()
+			set src in oview(1)
+			step_towards(usr,src)
+			sleep(10)
+			if(usr.followplayer==1){alert("You cannot use the vanishing cabinet while following a player.");return}
+			if(usr.removeoMob) spawn()usr:Permoveo()
+			hearers() << "[usr] walks into the cabinet and disappears."
 
+
+obj/Port_Key
+	icon='portal.dmi'
+	icon_state="portkey"
+	verb
+		Touch()
+			set src in oview(1)
+			step_towards(usr,src)
+			sleep(10)
+			if(usr.followplayer==1){alert("You cannot use a portkey while following a player.");return}
+			if(usr.removeoMob) spawn()usr:Permoveo()
+			hearers()<<"[usr] touches the portkey and vanishes."
+			for(var/obj/hud/player/R in usr.client.screen)
+				del(R)
+			for(var/obj/hud/cancel/C in usr.client.screen)
+				del(C)
+			usr.loc=locate(src.lastx,src.lasty,src.lastz)
+			step(usr,SOUTH)
+			return
+	New()
+		..()
+		spawn(300)
+			del(src)
+mob/var/tmp/list/stoverlays = list()
+proc/overlaylist(var/list/overlays)
+	var/list/returnlist = list()
+	for(var/X in overlays)
+		returnlist.Add(X)
+	return returnlist
 mob/var/tmp/trnsed = 0
 mob
 	mouse_drag_pointer = MOUSE_DRAG_POINTER
@@ -3444,163 +2111,139 @@ mob
 mob/GM/verb/Remote_View(mob/M in world)
 	set category="Staff"
 	set popup_menu = 0
+	if(clanrobed())return
 	if(M.loc == null) return
-	if(istype(M.loc.loc, /area/ministry_of_magic))
-		src << errormsg("You cannot use remote view on this person.")
-		return
-	client.eye=M
-	client.perspective=EYE_PERSPECTIVE
-	Log_admin("[src] remote views [M]")
+	if(M.derobe||M.aurorrobe||M.type == /mob/fakeDE ||istype(M.loc.loc, /area/ministry_of_magic||istype(M.loc.loc, /area/blindness))){src<<"<b>You cannot use remote view on this person.";return}
+	usr.client.eye=M
+	usr.client.perspective=EYE_PERSPECTIVE
 	hearers()<<"[usr] sends \his view elsewhere."
 mob/GM/verb/HM_Remote_View(mob/M in world)
 	set category="Staff"
 	set popup_menu = 0
+	if(clanrobed())return
 	usr.client.eye=M
 	usr.client.perspective=EYE_PERSPECTIVE
 mob/GM/verb/Return_View()
 	set category="Staff"
 	usr.client.eye=usr
 	usr.client.perspective=MOB_PERSPECTIVE
-
-	usr:Interface.SetDarknessColor(TELENDEVOUR_COLOR)
-
 	usr<<"You return to your body."
 
+mob/var/tmp/episkying = 0
+mob/var/tmp/meditating = 0
+mob/var/tmp/confused = 0
 obj/var
 	wlable = 0
 
+var/move_queue = TRUE
+
+mob
+	var
+		tmp/obj/wingobject
+		tmp/Wingardiumleviosa
+
+client
+	var/tmp
+		moving = 0
+		list/movements = list()
+
+	Move(loc,dir)
+		if(mob.confused && dir)
+			dir = turn(dir, 180)
+			loc = get_step(mob, dir)
+
+		if(mob.wingobject)
+			var/turf/t = get_step(mob.wingobject,dir)
+			if(istype(mob.wingobject.loc,/mob))
+				src << infomsg("You let go of the object you were holding.")
+				mob.wingobject.overlays = null
+				mob.wingobject=null
+				mob.Wingardiumleviosa = null
+			else if(t && (t in view(view)))
+				mob.wingobject.Move(t)
+			return
+
+		if(mob.removeoMob)
+			step(mob.removeoMob,dir)
+			return
+
+		if(mob.away)
+			mob.away = 0
+			mob.status=usr.here
+			mob.overlays-=image('AFK.dmi',icon_state="AFK2")
+			mob.overlays-=image('AFK.dmi',icon_state="AFK3")
+			mob.overlays-=image('AFK.dmi',icon_state="AFK4")
+			mob.overlays-='AFK.dmi'
+
+		if(mob.questionius==1)
+			mob.overlays-=icon('hand.dmi')
+			mob.questionius=0
+
+		if(move_queue)
+			if(!movements) movements = list()
+			if(movements.len < 10)
+				movements += dir
+
+			if(moving) return
+			moving = 1
+
+			var/index = 0
+			while(movements && index < movements.len)
+				index++
+				var/d = movements[index]
+				..(get_step(mob, d), d)
+				sleep(1)
+			movements = null
+			moving = 0
+		else
+			..()
+
+obj/var
+	controllable = 0
 mob/var/Imperio = 0
 mob/GM
 	var
 		controlobject
 obj/overlay
 	flash
-		icon = 'attacks.dmi'
-		icon_state = "leviosa"
+		icon = 'flash.dmi'
+		icon_state = "flash"
 		layer = MOB_LAYER
 
 
 obj/portkey
 	var/obj/portkey/partner
-	var
-		HP = 15
-		canDamage = 1
-
-		list/Players
-		obj/clock/timed = 0
-
+	var/HP = 15
 	icon='portal.dmi'
 	icon_state="portkey"
-	accioable = 1
-	wlable = 1
-	canSave = FALSE
-
-	New(Loc, dmg=1, iconState="random", time=300)
-		set waitfor = 0
+	New()
 		..()
-
-		canDamage = dmg
-
-		if(iconState == "random")
-			switch(rand(1,4))
-				if(1)
-					icon='bucket.dmi'
-					icon_state="bucket"
-				if(2)
-					icon='misc.dmi'
-					icon_state="tea"
-				if(3)
-					icon = 'scrolls.dmi'
-					icon_state = "blank"
-				if(4)
-					icon = 'turf.dmi'
-					icon_state="candle"
-		else
-			icon_state = iconState
-		sleep(time)
-		view(src) << "The portkey collapses and closes."
-		Dispose()
-
-	Crossed(mob/Player/p)
-		if(isplayer(p))
-			Teleport(p)
-
-	Move(atom/NewLoc)
-		if(NewLoc.density && get_dist(loc, NewLoc) == 1) return
-
-		.=..()
-
+		switch(rand(1,3))
+			if(1)
+				icon='cau.dmi'
+				icon_state="bucket"
+			if(2)
+				icon='misc.dmi'
+				icon_state="beer"
+			if(3)
+				icon = 'scrolls.dmi'
+				icon_state = "blank"
+			if(4)
+				icon = 'turfZ.dmi'
+				icon_state="candle"
+		spawn(300)
+			view(src) << "The portkey collapses and closes."
+			del(src)
 	proc/Teleport(mob/Player/M)
-		if(!partner) return
-
-		if(!(!M.client.moving && issafezone(M.loc.loc, 0)) && M.Transfer(partner.loc, 0))
+		if(M.Transfer(partner.loc))
 			M << "You step through the portkey."
-
-			if(timed)
-				if(timed == 2)
-
-					var/hudobj/Timer/t = locate() in M.client.screen
-					t.hide()
-
-					partner.timed.related -= t
-					if(partner.timed.related.len == 0)
-						partner.timed.related = null
-
-
-					partner.Players -= M
-					if(partner.Players.len == 0)
-						partner.Players = null
-
-				else
-					if(!Players) Players = list()
-					Players += M
-
-					var/hudobj/Timer/t = new(null, M.client, null, show=1)
-
-					t.maptext = timed.maptext
-
-					if(!timed.related)
-						timed.related = list()
-					timed.related += t
-
 			..()
-
-	Dispose()
-		if(Players)
-			for(var/mob/Player/p in Players)
-				p.Transfer(loc)
-
-			Players = null
-
-		if(timed && timed != 2)
-
-			for(var/hudobj/h in timed.related)
-				h.hide()
-
-			timed.related = null
-
-		partner = null
-		..()
-	Attacked(obj/projectile/p)
-		HP--
-		p.owner << "You hit the [name]."
-		if(HP < 1)
-			hearers(partner) << infomsg("The portkey has been destroyed from the other end.")
-			hearers(src)     << infomsg("The portkey has been destroyed.")
-
-			p.Dispose()
-			partner.Dispose()
-			Dispose()
 
 mob/Player
 	var/tmp/teleporting = 0
 
 	proc/Transfer(turf/t)
 		if(teleporting) return 0
-
-		if(istype(t, /atom/movable))
-			t = t.loc
-
 		teleporting = 1
 
 		var/tmp_dir = dir
@@ -3613,46 +2256,3 @@ mob/Player
 		teleporting = 0
 
 		return 1
-
-atom/movable/var/tmp/reflect
-
-obj/Shield
-	icon='portal.dmi'
-	icon_state = "shield"
-	layer = 5
-	density = 1
-
-mob/Player
-	var/lastAttack = "Inflamari"
-	verb/Attack()
-		var/mob/m = src
-		switch(lastAttack)
-			if("Glacius")
-				m:Glacius()
-			if("Inflamari")
-				m:Inflamari()
-			if("Waddiwasi")
-				m:Waddiwasi()
-			if("Tremorio")
-				m:Tremorio()
-			if("Aqua Eructo")
-				m:Aqua_Eructo()
-			if("Chaotica")
-				m:Chaotica()
-			if("Sanguinis Iactus")
-				m:Sanguinis_Iactus()
-			if("Incendio")
-				m:Incendio()
-			if("Bombarda")
-				m:Bombarda()
-			if("Gladius")
-				m:Gladius()
-			if("Spellbook")
-				if(!m:usedSpellbook)
-					lastAttack = "Inflamari"
-				else
-					m:usedSpellbook.cast(m)
-
-mob/Player/var/cooldownModifier = 1
-mob/Player/var/tmp/extraCDR = 0
-mob/Player/var/tmp/list/passives

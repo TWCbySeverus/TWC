@@ -29,7 +29,7 @@ CREATE TABLE `tblMultikey` (
   `IP` int(10) unsigned NOT NULL,
   `ID` int(10) unsigned NOT NULL,
   PRIMARY KEY (`ckey`,`IP`,`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,7 +45,7 @@ CREATE TABLE `tblReferralAmounts` (
   `RefererCkey` varchar(50) NOT NULL,
   `Amount` mediumint(8) unsigned NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=1549 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -59,7 +59,7 @@ CREATE TABLE `tblAlerts` (
   `ckey` varchar(50) NOT NULL,
   `type` tinyint(3) NOT NULL,
   KEY `ckey` (`ckey`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -78,7 +78,7 @@ CREATE TABLE `tblWarnings` (
   `length` mediumint(8) unsigned DEFAULT NULL,
   PRIMARY KEY (`ID`),
   KEY `ckey` (`ckey`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=11394 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -92,7 +92,7 @@ CREATE TABLE `tblPosts` (
   `id` tinyint(4) NOT NULL,
   `body` longtext NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -123,8 +123,9 @@ CREATE TABLE `tblPlayers` (
   `Cspecverb` tinyint(1) NOT NULL,
   `clanRank` varchar(50) DEFAULT NULL,
   `refererckey` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`ckey`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`ckey`),
+  KEY `ckey` (`ckey`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -164,7 +165,7 @@ CREATE TABLE `tblPlayinglogs` (
   `22` tinyint(1) NOT NULL,
   `23` tinyint(1) NOT NULL,
   UNIQUE KEY `ckey` (`ckey`,`day`,`month`,`year`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -184,7 +185,7 @@ CREATE TABLE `tblClients` (
   `date_registered` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`client_id`),
   UNIQUE KEY `email_address_UNIQUE` (`email_address`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 COMMENT='		';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -200,7 +201,7 @@ CREATE TABLE `tblEventLogs` (
   `timestamp` int(10) unsigned NOT NULL,
   `message` text NOT NULL,
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -216,7 +217,7 @@ CREATE TABLE `tblReferrals` (
   `IPAddress` int(10) unsigned NOT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `IPAddress` (`IPAddress`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=11842 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

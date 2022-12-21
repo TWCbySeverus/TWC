@@ -1,32 +1,9 @@
-proc/GenerateIcon(atom/movable/a, px = 0, py = 0, wig = 1, shoes = 1, scarf = 1)
-
-	if(scarf)
-		var/image/i = image(pick(typesof(/obj/items/wearable/scarves/) - /obj/items/wearable/scarves/), "")
-		i.layer   = FLOAT_LAYER - 5
-		i.pixel_x = px
-		i.pixel_y = py
-
-		a.overlays += i
-
-	if(shoes)
-		var/image/i = image(pick(typesof(/obj/items/wearable/shoes/)   - /obj/items/wearable/shoes/),   "")
-
-		i.layer   = FLOAT_LAYER - 5
-		i.pixel_x = px
-		i.pixel_y = py
-
-		a.overlays += i
-
-	if(wig)
-		var/list/colors = list("black", "blue", "green", "grey", "pink", "purple", "silver", "cyan", "teal", "red", "orange")
-		var/image/i = image(text2path("/obj/items/wearable/wigs/[a.gender == MALE ? "male" : "female"]_[pick(colors)]_wig"), "")
-
-		i.layer   = FLOAT_LAYER - 4
-		i.pixel_x = px
-		i.pixel_y = py
-
-		a.overlays += i
-
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
 obj/teacher
 	var
 		class/classInfo
@@ -44,11 +21,15 @@ obj/teacher
 			icon   = 'FemaleStaff.dmi'
 			gender = FEMALE
 		else
-			name   = pick("Palmer", "Bob", "Jorge", "Davis", "Shayne", "Clayton", "Olin", "Ty", "Jayson", "Owen", "Ned", "Benito", "Prince", "Cyrus", "Art", "Ben", "Derek", "Kendrick", "Frances", "Garry", "Man", "Federico", "Clifford")
+			name   = pick("Palmer", "Bob", "Jorge", "Davis", "Shayne", "Clayton", "Olin", "Ty", "Jayson", "Owen", "Ned", "Benito", "Prince", "Cyrus", "Art", "Derek", "Kendrick", "Frances", "Garry", "Man", "Federico", "Clifford")
 			icon   = 'MaleStaff.dmi'
 			gender = MALE
 
-		GenerateIcon(src)
+		overlays += image(pick(typesof(/obj/items/wearable/scarves/) - /obj/items/wearable/scarves/), "")
+		overlays += image(pick(typesof(/obj/items/wearable/shoes/)   - /obj/items/wearable/shoes/),   "")
+
+		var/list/colors = list("black", "blue", "green", "grey", "pink", "purple", "silver", "cyan", "teal", "red", "orange")
+		overlays += image(text2path("/obj/items/wearable/wigs/[gender == MALE ? "male" : "female"]_[pick(colors)]_wig"), "")
 
 		namefont.QuickName(src, src.name, rgb(255,255,255), "#000", top=1)
 
@@ -75,6 +56,7 @@ obj/teacher
 			l.name = classInfo.name
 			l.uses = classInfo.uses
 			wand.spell = l
+			p:Resort_Stacking_Inv()
 
 		else
 			p << errormsg("You aren't close enough.")
@@ -99,74 +81,64 @@ class
 		spelltype
 		uses = 10
 
-		tmp
-			members
-			lastTaught
+	proc/say(var/msg)
+		hearers(12, professor) << "<font color=#2bcfce>\[[subject] Professor] <b>[professor.name]</b> : </font>[msg]"
 
-	proc/say(var/msg, mob/Player/p)
-		if(!p)
-			hearers(12, professor) << "<span style=\"color:#2bcfce;\">\[[subject] Professor] <b>[professor.name]</b> : </span>[msg]"
-		else
-			p << "<span style=\"color:#2bcfce;\">\[[subject] Professor] <b>[professor.name]</b> : </span>[msg]"
-
-	proc/start(mob/Player/p)
-		if(!professor.canTeach)
-			spawn(300)
-				professor.canTeach = TRUE
-		lastTaught = world.time
-		say("Welcome students to [subject] class. Today you will be learning about the spell [name].", p)
+	proc/start()
+		spawn(300)	professor.canTeach = TRUE
+		say("Welcome students to [subject] class. Today you will be learning about the spell [name].")
 		sleep(30)
-		say("When I'm done explaining the spell, please come to me and take a practice wand, use that wand to practice the spell until you've learned it. Of course if you already have a practice wand of another spell, you will not be able to get another.", p)
+		say("When I'm done explaining the spell, please come to me and take a practice wand, use that wand to practice the spell until you've learned it. Of course if you already have a practice wand of another spell, you will not be able to get another.")
 		sleep(60)
-		say("This spell [mp ? "uses [mp] of your" : "does not use"] MP for each use. It [wand ? "requires" : "doesn't require"] a wand.", p)
+		say("This spell [mp ? "uses [mp] of your" : "does not use"] MP for each use. It [wand ? "requires" : "doesn't require"] a wand.")
 		sleep(30)
 		if(cd)
-			say("[name] applies a [cd] second cooldown after using it.", p)
+			say("[name] applies a [cd] second cooldown after using it.")
 			sleep(30)
 
 
 
 	projectile
 		subject = "DADA"
-		uses    = 10000
+		uses    = 1000
 		wand    = TRUE
 
-		start(mob/Player/p)
+		start()
 			..()
-			say("[name] is a projectile-based spell. When casted a projectile will shoot out towards the direction you are facing.", p)
+			say("[name] is a projectile-based spell. When casted a projectile will shoot out towards the direction you are facing.")
 			sleep(30)
-			say("If you want to learn [name] faster, use it to knock out monsters or players!", p)
+			say("If you want to learn [name] faster, use it to knock out monsters or players!")
 			sleep(30)
 
 		Waddiwasi
-			mp = 20
-			start(mob/Player/p)
-				..()
-				say("The [name] projectile looks like pink gum.", p)
-		Glacius
-			mp = 20
-			start(mob/Player/p)
-				..()
-				say("The [name] projectile looks like ice and can also be used to freeze water.", p)
-		Tremorio
 			mp = 10
-			start(mob/Player/p)
+			start()
 				..()
-				say("The [name] projectile looks like muddy dirt and rocks.", p)
+				say("The [name] projectile looks like pink gum.")
+		Glacius
+			mp = 10
+			start()
+				..()
+				say("The [name] projectile looks like ice and can also be used to freeze water.")
+		Tremorio
+			mp = 5
+			start()
+				..()
+				say("The [name] projectile looks like muddy dirt and rocks.")
 		Chaotica
 			mp = 30
-			start(mob/Player/p)
+			start()
 				..()
-				say("The [name] projectile looks like a ball of darkness.", p)
+				say("The [name] projectile looks like a ball of darkness.")
 		Aqua_Eructo
-			start(mob/Player/p)
+			start()
 				..()
-				say("The [name] projectile looks like a wave of water. If you recall, I said this projectile doesn't use MP, it's because it costs health instead, 30 per use.", p)
+				say("The [name] projectile looks like a wave of water. If you recall, I said this projectile doesn't use MP, it's because it costs health instead, 30 per use.")
 
 	verbal
-		start(mob/Player/p)
+		start()
 			..()
-			say("[name] is a verbal-based spell. This spell is casted by typing [name] into the Say chat.", p)
+			say("[name] is a verbal-based spell. This spell is casted by typing [name] into the Say chat.")
 			sleep(30)
 
 		Eat_Slugs
@@ -174,403 +146,384 @@ class
 			mp      = 100
 			cd      = 15
 			wand    = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("[name] will make the target vomit slugs. The slugs are created using not only your MP, but your target's as well. The slugs will slowly eat their MP away until it reaches zero. Once your target runs out of MP, they will stop vomiting up slugs.", p)
+				say("[name] will make the target vomit slugs. The slugs are created using not only your MP, but your target's as well. The slugs will slowly eat their MP away until it reaches zero. Once your target runs out of MP, they will stop vomiting up slugs.")
 		Disperse
 			cd      = 10
-			start(mob/Player/p)
+			start()
 				..()
-				say("It gets rid of any smoke or swamp that may happen around you. There's even a rumor that if used enough times, it'll even disperse dark mark created by dark wizards!", p)
+				say("It gets rid of any smoke or swamp that may happen around you. There's even a rumor that if used enough times, it'll even disperse dark mark created by dark wizards!")
 
 	transfiguration
 		subject = "Transfiguration"
 		wand    = TRUE
 		cd      = 15
-		uses    = 200
-		start(mob/Player/p)
+		start()
 			..()
-			say("[name] is a transfiguration-based spell. When casted the form of the target will change. When you practice this spell, you will get 10 uses when used on players.", p)
+			say("[name] is a transfiguration-based spell. When casted the form of the target will change.")
 			sleep(30)
 
 		Scurries
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell transforms others into a mouse.", p)
+				say("This spell transforms others into a mouse.")
 		Carrotosi
-			start(mob/Player/p)
+			start()
 				..()
-				say("This is one of the cutest spells. It turns others into a small little white bunny.", p)
+				say("This is one of the cutest spells. It turns others into a small little white bunny.")
 		Delicio
-			start(mob/Player/p)
+			start()
 				..()
-				say("This is wonderful especially to those who are hungry. This turns others into a turkey served with some veggies.", p)
+				say("This is wonderful especially to those who are hungry. This turns others into a turkey served with some veggies.")
 		Seatio
-			start(mob/Player/p)
+			start()
 				..()
-				say("This will turn people you don't like into a chair!", p)
+				say("This will turn people you don't like into a chair!")
 		Ribbitous
-			start(mob/Player/p)
+			start()
 				..()
-				say("This will turn others into a frog. Don't think that you'll turn into a prince/princess after you get kissed. It doesn't work like that!", p)
+				say("This will turn others into a frog. Don't think that you'll turn into a prince/princess after you get kissed. It doesn't work like that!")
 		Personio_Sceletus
-			uses = 20
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell is one of my favorites and perfect for halloween! You will be able to transform yourself into a skeleton. Careful not to scare too many people like this though.", p)
+				say("This spell is one of my favorites and perfect for halloween! You will be able to transform yourself into a skeleton. Careful not to scare too many people like this though.")
 		Personio_Musashi
-			uses = 20
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell is great for hiding. It turns you into a little small mushroom.", p)
+				say("This spell is great for hiding. It turns you into a little small mushroom.")
 		Transfiguro_Revertio
-			uses = 15
-			start(mob/Player/p)
+			start()
 				..()
-				say("Let's say you turned transfigured someone by accident. This handy spell turns them back to normal.", p)
+				say("Let's say you turned transfigured someone bu accident. This handy spell turns them back to normal.")
 		Felinious
-			start(mob/Player/p)
+			start()
 				..()
-				say("After using this spell on someone, they will be turned into a small black cat. Beware of them crossing you! You don't want any bad luck.", p)
+				say("After using this spell on someone, they will be turned into a small black cat. Beware of them crossing you! You don't want any bad luck.")
 		Avifors
-			start(mob/Player/p)
+			start()
 				..()
-				say("This turns others into a small black bird. Similar to a black crow. Claw! Claw!", p)
+				say("This turns others into a small black bird. Similar to a black crow. Claw! Claw!")
 		Nightus
-			start(mob/Player/p)
+			start()
 				..()
-				say("After using this spell, you will be turned into a little bat. Batman may not like you much in this state.", p)
+				say("After using this spell, you will be turned into a little bat. Batman may not like you much in this state.")
 		Harvesto
-			start(mob/Player/p)
+			start()
 				..()
-				say("It turns you into a nice onion. Be careful not get eaten though.", p)
+				say("It turns you into a nice onion. Be careful not get eaten though.")
 		Peskipiksi_Pestermi
-			start(mob/Player/p)
+			start()
 				..()
-				say("Once you flick your wand and point it at the student, they will be turned into a pixie.", p)
+				say("Once you flick your wand and point it at the student, they will be turned into a pixie.")
 	Antifigura
 		subject = "Transfiguration"
 		mp      = 50
 		cd      = 15
 		wand    = TRUE
-		start(mob/Player/p)
+		start()
 			..()
-			say("If you don't like being transfigured, then this is the spell for you. This will prevent any student from using transfiguration spells on you. This lasts for a certain time though so use it wisely.", p)
+			say("If you don't like being transfigured, then this is the spell for you. This will prevent any student from using transfiguration spells on you. This lasts for a certain time though so use it wisely.")
 
 	dada
 		Petrificus_Totalus
-			mp = 50
+			mp = 10
 			cd = 15
-			uses = 200
-			start(mob/Player/p)
+			start()
 				..()
-				say("This is the Full Body-Bind Curse! It stiffens a person's limbs so they cannot move.", p)
+				say("This is the Full Body-Bind Curse! It stiffens a person's limbs so they cannot move.")
 		Reducto
 			wand = TRUE
-			mp = 400
-			cd = 15
-			start(mob/Player/p)
+			start()
 				..()
-				say("If binded, this spell is perfect for you. It frees you from any binds or frozen spells.", p)
+				say("If binded, this spell is perfect for you. It frees you from any binds or frozen spells.")
 		Incindia
 			mp   = 450
 			cd   = 15
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("Careful when you use this. It fires projectiles in all 8 directions! It's quite a useful spell in my opinion.", p)
+				say("Careful when you use this. It fires projectiles in all 8 directions! It's quite a useful spell in my opinion.")
 		Protego
-			cd = 40
-			mp = 100
+			cd = 10
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("Protego is a shield charm, for 5 seconds any spell you are hit with will effect the caster and not to you, as if you are a mirror.", p)
+				say("The Shield Charm causes minor to moderate jinxes, curses, and hexes to rebound upon the attacker.")
 		Impedimenta
 			mp = 750
 			cd = 20
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell creates an AoE (area of effect) effect inside a 15x15 square for 10 seconds.", p)
+				say("This spell freezes everyone in your view for about 10 seconds.")
+		Immobulus
+			mp = 600
+			cd = 15
+			wand = TRUE
+			start()
+				..()
+				say("This spell doesnt allow anyone to move in your view for 15 seconds.")
 		Depulso
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("Known as the knockback charm. This pushes someone out of the way. It is great for dueling", p)
+				say("Known as the knockback charm. This pushes someone out of the way. It is great for dueling")
 				sleep(30)
-				say("Using [name] to knock someone off of a broom will prevent them from flying for 15 seconds.", p)
+				say("Using [name] to knock someone off of a broom will prevent them from flying for 15 seconds.")
 		Occlumency
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("This handy spell prevents people from accessing your mind thus they won't be able to see where you are located. It uses your MP in seconds as the MP usage.", p)
+				say("This handy spell prevents people from accessing your mind thus they won't be able to see where you are located. It uses your MP in seconds as the MP usage.")
 		Incarcerous
 			cd = 15
 			wand = TRUE
-			uses = 200
-			mp = 50
-			start(mob/Player/p)
+			start()
 				..()
-				say("This ties someone or something up with ropes.", p)
+				say("This ties someone or something up with ropes.")
 		Expelliarmus
-			cd = 30
-			mp = 300
+			cd = 15
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("Known as the disarming charm. You lose your wand and have to re-draw it.", p)
+				say("Known as the disarming charm. You lose your wand and have to re-draw it.")
 	Flippendo
 		subject = "DADA"
 		mp      = 10
 		wand    = TRUE
-		start(mob/Player/p)
+		start()
 			..()
-			say("Once this projectile hits the person, it moves them one space.", p)
+			say("Once this projectile hits the person, it moves them one space.")
 	gcom
 		Sense
-			start(mob/Player/p)
+			start()
 				..()
-				say("It allows you to sense how many times the student has died and killed others.", p)
+				say("It allows you to sense how many times the student has died and killed others.")
 		Scan
-			start(mob/Player/p)
+			start()
 				..()
-				say("This allows you to see how much health and mana the student has. It is nice for checking out your competition.", p)
+				say("This allows you to see how much health and mana the student has. It is nice for checking out your competition.")
 		Obliviate
 			mp = 700
 			cd = 30
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("You'll forget whatever the caster wants you to. You also will have some of your chat logs erased too.", p)
+				say("You'll forget whatever the caster wants you to. You also will have some of your chat logs erased too.")
 		Crucio
 			mp = 400
 			cd = 15
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("Inflicts intense pain on the recipient of the curse. One of the three unforgivable curses.", p)
+				say("Inflicts intense pain on the recipient of the curse. One of the three unforgivable curses.")
 		Solidus
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("This creates a huge stone in front of you. Perfect for blocking but only lasts for a set time.", p)
+				say("This creates a huge stone in front of you. Perfect for blocking but only lasts for a set time.")
 		Densaugeo
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("This hex causes the victim's teeth to grow rapidly, but can also be used to restore lost teeth.", p)
+				say("This hex causes the victim's teeth to grow rapidly, but can also be used to restore lost teeth.")
+		Anteoculatia
+			mp = 250
+			wand = TRUE
+			start()
+				..()
+				say("This hex causes the victim to sprout antlers from their skull. A painful process but you could hang all sorts on your new antlers.")
 		Flagrate
 			mp = 300
 			cd = 10
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("This displays a large announcement to those who are near you.", p)
+				say("This displays a large announcement to those who are near you.")
 		Valorus
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("This handy spell can make someone stop following you and have someone fall off a broom too.", p)
+				say("This handy spell can make someone stop following you and have someone fall off a broom too.")
 		Arcesso
 			wand = TRUE
 			mp = 800
 			cd = 15
-			start(mob/Player/p)
+			start()
 				..()
-				say("You can summon a student with this spell. It requires two students to work though and they both must have this spell.", p)
+				say("You can summon a student with this spell. It requires two students to work though and they both must have this spell.")
 				sleep(30)
-				say("The second person who joins the summoning needs at least 400 MP.", p)
+				say("The second person who joins the summoning needs at least 400 MP.")
 		Riddikulus
 			cd = 30
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("HAHA! This spell turns you into the opposite sex for a few minutes.", p)
+				say("HAHA! This spell turns you into the opposite sex for a few minutes.")
 		Telendevour
 			wand = TRUE
-			start(mob/Player/p)
+			start()
 				..()
-				say("This allows you to look into the caster's eyes showing where they are located.", p)
+				say("This allows you to look into the caster's eyes showing where they are located.")
 
 	comc
 		subject = "COMC"
 		wand    = TRUE
 		Serpensortia
 			cd = 15
-			mp = 100
-			start(mob/Player/p)
+			start()
 				..()
-				say("Summons a small snake that can be rebellious if not treated right.", p)
+				say("Summons a small snake that can be rebellious if not treated right.")
 		Repellium
 			mp = 100
 			cd = 90
-			start(mob/Player/p)
+			start()
 				..()
-				say("Creates an Area of Effect that pushes back all monsters outside the circumference. Beware: this doesn't work on all of them. ;)", p)
+				say("Creates an Area of Effect that pushes back all monsters outside the circumference. Beware: this doesn't work on all of them. ;)")
 				sleep(30)
-				say("[name] will also disable projectile usage for 30 seconds.", p)
+				say("[name] will also disable projectile usage for 30 seconds.")
 		Avis
 			cd = 15
-			mp = 100
-			start(mob/Player/p)
+			start()
 				..()
-				say("Summons a bird that can come to your aid and heal you plus others if needed.", p)
+				say("Summons a bird that can come to your aid and heal you plus others if needed.")
 		Permoveo
 			mp = 300
-			start(mob/Player/p)
+			start()
 				..()
-				say("This unique spell lets you control monsters like trolls or even the bassy if you are lucky.", p)
+				say("This unique spell lets you control monsters like trolls or even the bassy if you are lucky.")
 				sleep(30)
-				say("It applies a cooldown after you use it, the cooldown is dependent on your level, it starts at 400 seconds and reduces by 1 per every 2 levels you have until it reaches a minimum of 30 seconds.", p)
+				say("It applies a cooldown after you use it, the cooldown is dependent on your level, it starts at 400 seconds and reduces by 1 per every 2 levels you have until it reaches a minimum of 30 seconds.")
 		Arania_Exumai
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell is used to blast away Acromantulas and, presumably, all other arachnids.", p)
+				say("This spell is used to blast away Acromantulas and, presumably, all other arachnids.")
 		Dementia
 			cd = 15
-			start(mob/Player/p)
+			start()
 				..()
-				say("This will summon a dementor however it will not be under your control. It could turn on you and eat your soul!", p)
+				say("This will summon a dementor however it will not be under your control. It could turn on you and eat your soul!")
 		Expecto_Patronum
-			start(mob/Player/p)
+			start()
 				..()
-				say("I'd say this would be perfect for fighting dementors. It sends dementors and other dark creatures away.", p)
+				say("I'd say this would be perfect for fighting dementors. It sends dementors and other dark creatures away.")
 	charms
 		subject = "Charms"
 		wand    = TRUE
-
-		Lumos
-			cd = 60
-			mp = 100
-
-			start(mob/Player/p)
-				..()
-				say("It lights the area around you.", p)
-
 		Conjunctivis
 			cd = 15
-			start(mob/Player/p)
+			start()
 				..()
-				say("This curse is presumed to cause great pain in the victim's eyes causing the victim to be blind for a certain amount of time.", p)
+				say("This curse is presumed to cause great pain in the victim's eyes causing the victim to be blind for a certain amount of time.")
 		Portus
 			mp = 25
 			cd = 30
-			start(mob/Player/p)
+			start()
 				..()
-				say("It turns an object into a port-key. That means you can make a scroll into a portal. How exciting!", p)
+				say("It turns an object into a port-key. That means you can make a scroll into a portal. How exciting!")
 		Rictusempra
 			mp = 500
-			start(mob/Player/p)
+			start()
 				..()
-				say("This will cause you to laugh without stopping. You won't be able to speak during this time.", p)
+				say("This will cause you to laugh without stopping. You won't be able to speak during this time.")
 		Deletrius
-			start(mob/Player/p)
+			start()
 				..()
-				say("It deletes things like roses and scrolls.", p)
+				say("It deletes things like roses and scrolls.")
 		Evanesco
 			cd = 15
-			start(mob/Player/p)
+			start()
 				..()
-				say("Vanishes the target; the best description of what happens to it is that it goes \"into non-being, which is to say, everything", p)
+				say("Vanishes the target; the best description of what happens to it is that it goes \"into non-being, which is to say, everything")
 		Accio
-			start(mob/Player/p)
+			start()
 				..()
-				say("Known as the summoning charm. It summons an object to the caster.", p)
-		Accio_Maxima
-			start(mob/Player/p)
-				..()
-				say("Known as the summoning charm. It summons every item you own to the caster, like monster drops or scrolls.", p)
+				say("Known as the summoning charm. It summons an object to the caster.")
 		Reparo
-			start(mob/Player/p)
+			start()
 				..()
-				say("It's used to repair objects. Quite handy if something is broken.", p)
+				say("It's used to repair objects. Quite handy if something is broken.")
 		Herbificus
-			start(mob/Player/p)
+			start()
 				..()
-				say("This summons roses. It is perfect for Valentine's Day!", p)
-		Herbivicus
-			start(mob/Player/p)
-				..()
-				say("This spell helps growing herbs, you still have to plant the seed in a bucket though.", p)
+				say("This summons roses. It is perfect for Valentine's Day!")
 		Bombarda
-			mp = 100
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell destroys objects and turns it into rubble.", p)
+				say("This spell destroys objects and turns it into rubble.")
 		Eparo_Evanesca
 			cd = 10
-			start(mob/Player/p)
+			start()
 				..()
-				say("It makes the invisible turn visible.", p)
+				say("It makes the invisible turn visible.")
 				sleep(30)
-				say("[name] prevents who it reveals from recloaking themselves for 15 seconds.", p)
+				say("[name] prevents who it reveals from recloaking themselves for 15 seconds.")
 		Langlock
 			mp = 600
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell glues the subject's tongue to the roof of their mouth, making it hard to speak.", p)
+				say("This spell glues the subject's tongue to the roof of their mouth, making it hard to speak.")
 		Muffliato
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell fills peoples' ears with an unidentifiable buzzing to keep them from hearing nearby conversations.", p)
+				say("This spell fills peoples' ears with an unidentifiable buzzing to keep them from hearing nearby conversations.")
 		Confundus
-			mp = 400
-			cd = 40
-			start(mob/Player/p)
+			mp = 30
+			start()
 				..()
-				say("It causes the victim to become confused and befuddled.", p)
+				say("It causes the victim to become confused and befuddled.")
 		Anapneo
-			start(mob/Player/p)
+			start()
 				..()
-				say("This opens the airpipes of a student.", p)
+				say("This opens the airpipes of a student.")
 		Melofors
 			cd = 15
-			start(mob/Player/p)
+			start()
 				..()
-				say("This drops a pumpkin on your targets head temporarily blinding them until it falls off.", p)
+				say("This drops a pumpkin on your targets head temporarily blinding them until it falls off.")
 		Levicorpus
 			mp = 800
 			cd = 60
-			start(mob/Player/p)
+			start()
 				..()
-				say("This flips you upside down so any secret notes or pens will be on the floor for people to collect. Watch out!", p)
+				say("This flips you upside down so any secret notes or pens will be on the floor for people to collect. Watch out!")
 		Incendio
 			wand = TRUE
-			mp = 20
-			start(mob/Player/p)
+			mp = 10
+			start()
 				..()
-				say("This spell is helpful with burning roses.", p)
+				say("This spell is helpful with burning roses.")
 		Imitatus
-			start(mob/Player/p)
+			start()
 				..()
-				say("This allows you to imitate any student in your view.", p)
+				say("This allows you to imitate any student in your view.")
 		Replacio
 			mp = 500
-			start(mob/Player/p)
+			start()
 				..()
-				say("Using this spell, you get to switch places with yourself and the target you have chosen.", p)
+				say("Using this spell, you get to switch places with yourself and the target you have chosen.")
 		Ferula
-			cd = 60
-			start(mob/Player/p)
-				..()
-				say("This summons our wonderful nurse and she will be there to help heal any minor wounds that you may have.", p)
-				sleep(30)
-				say("[name]'s heal has a 10 second cooldown.", p)
-		Tarantallegra
-			mp = 200
 			cd = 30
-			start(mob/Player/p)
+			start()
 				..()
-				say("This spell causes people to dance uncontrollably.", p)
+				say("This summons our wonderful nurse and she will be there to help heal any minor wounds that you may have.")
+				sleep(30)
+				say("[name]'s heal has a 5 second cooldown.")
+		Tarantallegra
+			mp = 100
+			cd = 15
+			start()
+				..()
+				say("This spell causes people to dance uncontrollably.")
 		Furnunculus
-			start(mob/Player/p)
+			start()
 				..()
-				say("This jinx covers the target in painful boils which causes you to lose health in the process.", p)
+				say("This jinx covers the target in painful boils which causes you to lose health in the process.")
 		Wingardium_Leviosa
-			start(mob/Player/p)
+			start()
 				..()
-				say("Levitates and moves the target; the wand motion is described as \"swish and flick.", p)
+				say("Levitates and moves the target; the wand motion is described as \"swish and flick.")
 
 proc
 	ends_with(var/string, var/end, var/ignoreCase = FALSE)
@@ -583,9 +536,14 @@ proc
 
 		return cut == end
 
+	replace(string, needle, new_string, start=1, end=0)
+		while(findtext(string,needle,start,end))
+			var/pos = findtext(string,needle,start,end)
+			string = copytext(string,1,pos) + new_string + copytext(string,pos+length(needle))
+		return string
+
 mob/Player
 	var/tmp/learnSpell/learning
-	var/list/SpellUses = list()
 
 	proc/learnSpell(name, use = 1)
 		if(learning && learning.name == name)
@@ -595,96 +553,16 @@ mob/Player
 
 				var/spellpath = learning.path
 
-				var/obj/items/wearable/wands/practice_wand/wand = locate() in Lwearing
-				if(wand)
-					wand.Equip(src)
-					wand.Dispose()
-					verbs += spellpath
-		else if(use == 1)
-			SpellUses[name]++
-
-			var/l = log(10, SpellUses[name])
-
-			if(l < 7 && l == round(l))
-				src << infomsg("You gained a new mastery level of <u>[name]</u>!")
+				spawn()
+					var/obj/items/wearable/wands/practice_wand/wand = locate() in Lwearing
+					if(wand)
+						wand.Equip(src)
+						wand.loc = null
+						Resort_Stacking_Inv()
+						verbs += spellpath
 
 
 learnSpell
 	var/path
 	var/name
 	var/uses
-
-area/hogwarts/class
-	safezoneoverride = 0
-
-	Defence_Against_the_Dark_Arts
-	Charms
-	Care_of_Magical_Creatures
-	Transfiguration
-	Headmasters_Class_West
-	Headmasters_Class_East
-
-	var/tmp/class/class
-	Entered(atom/movable/Obj, atom/OldLoc)
-		..()
-
-		if(class && isplayer(Obj))
-			var/mob/Player/p = Obj
-
-			if(!class.members)
-				class.members = list()
-
-			if(!(p.ckey in class.members))
-				class.members += p.ckey
-
-				if(class.professor.canTeach)
-					class.start(p)
-				else
-					p << infomsg("Take a seat and wait for the teacher to give their lecture.")
-
-
-WorldData/var/classReqPlayers = 4
-WorldData/var/classCooldown = 72000 // 2 hours
-WorldData/var/lastClass = 0
-
-obj/startClass
-	mouse_opacity = 2
-	maptext_width = 96
-	layer = 5
-	maptext_y = 8
-	mouse_over_pointer = MOUSE_HAND_POINTER
-
-	maptext = "<b style=\"text-align:center;\">C L A S S</b>"
-
-	icon = 'bb.dmi'
-
-	var/subject
-
-	Click()
-		if(worldData.currentEvents)
-			usr << errormsg("You can't use this while an event is running.")
-			return
-
-		var/ticks = worldData.classCooldown - (world.realtime - worldData.lastClass)
-		if(ticks > 0)
-			usr << errormsg("Try again in about [round(ticks / 600, 1)] minutes.")
-			return
-
-		var/area/a = loc.loc
-
-		if(!a.Players || a.Players.len < worldData.classReqPlayers)
-			usr << errormsg("Not enough players to start a class, try inviting your friends over to the classroom.")
-			return
-
-		worldData.lastClass = world.realtime
-
-		var/RandomEvent/Class/c = locate() in worldData.events
-		c.start(subject=src.subject)
-
-
-
-
-
-
-
-

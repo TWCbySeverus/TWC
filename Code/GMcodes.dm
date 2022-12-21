@@ -1,35 +1,31 @@
+/*
+ * Copyright © 2014 Duncan Fairley
+ * Distributed under the GNU Affero General Public License, version 3.
+ * Your changes must be made public.
+ * For the full license text, see LICENSE.txt.
+ */
 #define CREATE_PATH list(/obj,/mob,/turf,/area)			//	change the path to what you want to create, if you wish
+#define islist(X) istype(X,/list)					//	Do not change this line
 #define _CSS "<style type='text/css'></style>"	//	Enter the CSS style for the browser, if you wish to make it ore fancy.
 mob/var/list/monsterkills = list()
 mob
 	proc
 		Award(medalname)
-			set waitfor = 0
 			Players << "<h3>[src] has gained the [medalname] achievement!</h3>"
 			world.SetMedal(medalname,src)
 		AddKill(var/monster)
-			monsterkills[monster]++
-
-			if(monsterkills[monster] == 1)
-				bubblesort(monsterkills)
-
+			monsterkills["[monster]"]++
 			switch(monster)
 				if("Basilisk")
-					if(monsterkills[monster] == 1)
-						Award("Bassy Attacks!")
+					if(monsterkills["[monster]"] == 1)
+						spawn()Award("Bassy Attacks!")
 				if("Dementor")
-					if(monsterkills[monster] == 100)
-						Award("Where's the chocolate!?")
+					if(monsterkills["[monster]"] == 100)
+						spawn()Award("Where's the chocolate!?")
 				if("Rat","Demon Rat")
 					if((monsterkills["Rat"] + monsterkills["Demon Rat"]) == 500)
-						Award("Need a cat?")
-
-			var/l = log(10, monsterkills[monster]) + 1
-			if(l < 8 && l == round(l))
-				var/mob/Player/p = src
-				p.screenAlert("Monster Knowledge: \[[monster]] leveled up to [round(l)]")
-
-mob/Player/var
+						spawn()Award("Need a cat?")
+mob/var
 	timerDet = 0
 	timerMute = 0
 
@@ -48,6 +44,7 @@ proc/reset_winAT(var/mob/Player/M)
 	panATMain["anchor1"] = "0,0"
 	panATMain["anchor2"] = "100,100"
 	panATMain["title"] = "Main"
+//	panATMain["background-color"] = "#00FF00"
 	winset(M,"panATMain",list2params(panATMain))
 
 	var/list/tabAT = list()
@@ -86,19 +83,6 @@ client/verb/tabATChange()
 	set name = ".tabATChange"
 	if(!mob.admin)return
 	switch(winget(src,"tabAT","current-tab"))
-		if("panATLogs")
-			if(/mob/GM/verb/ChatLogs in mob.verbs)
-				src << browse("<body bgcolor=\"black\"> [file2text(chatlog)]</body>","window=broATLogsChat")
-			if(/mob/GM/verb/AdminLogs in mob.verbs)
-				src << browse("[file2text(adminlog)]","window=broATLogsAdmin")
-			if(/mob/GM/verb/EventLogs in mob.verbs)
-				src << browse("<table>[file2text(eventlog)]</table>","window=broATLogsEvents")
-			if(/mob/GM/verb/ClassLogs in mob.verbs)
-				src << browse("[file2text(classlog)]","window=broATLogsClass")
-			if(/mob/GM/verb/GoldLogs in mob.verbs)
-				src << browse("[file2text(goldlog)]","window=broATLogsGold")
-			if(/mob/GM/verb/KillLogs in mob.verbs)
-				src << browse("[file2text(killlog)]","window=broATLogsKill")
 		if("panATVerbs")
 			var/mob/Player/M = input("Pick player to view the verbs of") as null|anything in Players
 			if(!M)return
@@ -168,25 +152,6 @@ proc/reset_panATLogsChat(var/mob/Player/M)
 	broATLogsChat["anchor1"] = "0,0"
 	broATLogsChat["anchor2"] = "100,100"
 	winset(M,"broATLogsChat",list2params(broATLogsChat))
-
-proc/reset_panATLogsAdmin(var/mob/Player/M)
-	if(winexists(M,"panATLogsAdmin"))
-		winset(M,"panATLogsAdmin","parent=none")
-	winclone(M,"pane","panATLogsAdmin")
-	var/list/panATLogsAdmin = list()
-	panATLogsAdmin["anchor1"] = "0,0"
-	panATLogsAdmin["anchor2"] = "100,100"
-	panATLogsAdmin["size"] = "740x500"
-	panATLogsAdmin["title"] = "Admin"
-	winset(M,"panATLogsAdmin",list2params(panATLogsAdmin))
-
-	var/list/broATLogsAdmin = list()
-	broATLogsAdmin["type"] = "browser"
-	broATLogsAdmin["parent"] = "panATLogsAdmin"
-	broATLogsAdmin["size"] = "640x480"
-	broATLogsAdmin["anchor1"] = "0,0"
-	broATLogsAdmin["anchor2"] = "100,100"
-	winset(M,"broATLogsAdmin",list2params(broATLogsAdmin))
 
 proc/reset_panATLogsEvents(var/mob/Player/M)
 	if(winexists(M,"panATLogsEvents"))
@@ -276,8 +241,6 @@ proc/reset_panATVerbs(var/mob/Player/M)
 	winset(M,"panATVerbs",list2params(panATVerbs))
 mob/GM/verb/ChatLogs()
 	set hidden = 1
-mob/GM/verb/AdminLogs()
-	set hidden = 1
 mob/GM/verb/EventLogs()
 	set hidden = 1
 mob/GM/verb/ClassLogs()
@@ -287,7 +250,6 @@ mob/GM/verb/GoldLogs()
 mob/GM/verb/KillLogs()
 	set hidden = 1
 mob/GM/verb/Administration_Tools()
-	set category = "Staff"
 	reset_winAT(usr)
 	if(/mob/GM/verb/EditVerbs in verbs)
 		reset_panATVerbs(usr)
@@ -298,53 +260,69 @@ mob/GM/verb/Administration_Tools()
 	if(/mob/GM/verb/ChatLogs in verbs)
 		reset_panATLogsChat(usr)
 		winset(src,"tabATLogs","tabs=%2BpanATLogsChat")
-	if(/mob/GM/verb/AdminLogs in verbs)
-		reset_panATLogsAdmin(usr)
-		winset(src,"tabATLogs","tabs=%2BpanATLogsAdmin")
+		usr << browse("<body bgcolor=\"black\"> [file2text(chatlog)]</body>","window=broATLogsChat")
 	if(/mob/GM/verb/EventLogs in verbs)
 		reset_panATLogsEvents(usr)
 		winset(src,"tabATLogs","tabs=%2BpanATLogsEvents")
+		usr << browse("<table>[file2text(eventlog)]</table>","window=broATLogsEvents")
 	if(/mob/GM/verb/ClassLogs in verbs)
 		reset_panATLogsClass(usr)
 		winset(src,"tabATLogs","tabs=%2BpanATLogsClass")
+		usr << browse("[file2text(classlog)]","window=broATLogsClass")
 	if(/mob/GM/verb/GoldLogs in verbs)
 		reset_panATLogsGold(usr)
 		winset(src,"tabATLogs","tabs=%2BpanATLogsGold")
+		usr << browse("[file2text(goldlog)]","window=broATLogsGold")
 	if(/mob/GM/verb/KillLogs in verbs)
 		reset_panATLogsKill(usr)
 		winset(src,"tabATLogs","tabs=%2BpanATLogsKill")
-	winshowCenter(src,"winAT")
-mob/Player
+		usr << browse("[file2text(killlog)]","window=broATLogsKill")
+	winshow(src,"winAT",1)
+mob
 	proc
+		/*mute_countdown(var/length)
+			sleep(length)
+			if(mute)
+				mute = 0
+				world << "<b><font color=red>[src] has been unsilenced.</font></b>"
+				verbs += /mob/verb/Emote
+				verbs += /mob/verb/PM*/
 		mute_countdown()
-			set waitfor = 0
-
-			while(timerMute-- > 0)
-				sleep(600)
-
-			if(!src.mute) return
-			mute = 0
-			Players << "<b><span style=\"color:red;\">[src] has been unsilenced.</span></b>"
-
+			sleep(600)
+			timerMute--
+			if(timerMute < 1)
+				if(!src.mute)return
+				mute = 0
+				Players << "<b><font color=red>[src] has been unsilenced.</font></b>"
+			else
+				mute_countdown()
 		detention_countdown()
-			set waitfor = 0
+			sleep(600)//Minutes babbby.
+			timerDet--
+			if(timerDet < 1)
+				if(!Detention)return
+				flick('dlo.dmi',src)
+				src.loc=locate(48,16,21)
 
-			while(timerDet-- > 0)
-				sleep(600)
+				src.Detention=0
+				src.MuteOOC=0
+				Players<<"[src] has been released from Detention."
+				src.client.update_individual()
+			else
+				detention_countdown()
+		/*detention_countdown(var/length,mob/M)
+			sleep(length)
+			if(M.Detention)return
+			flick('dlo.dmi',M)
+			M.loc=locate(13,7,21)
+			M.client.view="17x17"
 
-			if(!Detention) return
-
-			src.FlickState("Orb",12,'Effects.dmi')
-			Transfer(locate("@Hogwarts"))
-
-			Detention = 0
-			MuteOOC = 0
-			Players << "[src] has been released from Detention."
-			client.update_individual()
-
-
+			M.verbs += /mob/verb/PM
+			M.Detention=1
+			M.OOCNo=0
+			world<<"[M] has been released from Detention."
+			M.updateClanPermissions()*/
 mob/test/verb/Remove_Junk()
-	set category = "Debug"
 	var/input = input("Which junk are we talkin'?","Junk Removal") as null|anything in list("PM Inbox","PM Outbox","Inventory","Bank Deposit Items")
 	if(!input) return
 	if(input == "PM Inbox")
@@ -377,24 +355,32 @@ mob/test/verb/Remove_Junk()
 			if(!person)return
 			var/alrt2 = alert("[person] has [person.contents.len] items. Would you like to delete them?",,"Yes","No")
 			if(alrt2 == "Yes") person.contents = list()
+	else if(input == "Bank Deposit Items")
+		var/alrt = alert("View amount of items in world, or delete individual's items.",,"View","Delete")
+		if(alrt == "View")
+			for(var/mob/Player/M in world)
+				if(M.bank)
+					src << "[M] has [M.bank.items.len] items "
+		if(alrt == "Delete")
+			var/mob/Player/person = input("Which person would you like to delete their items?") as null|mob in world
+			if(!person)return
+			var/alrt2 = alert("[person] has [person.bank.items.len] items. Would you like to delete them?",,"Yes","No")
+			if(alrt2 == "Yes") person.bank.items = list()
 proc/Log_admin(adminaction)
-	file("Logs/Adminlog.html")<<"[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [adminaction]<br />"
+	file("Logs/Adminlog.html")<<"[time2text(world.realtime,"MMM DD - hh:mm")]: [adminaction]<br />"
 proc/Log_gold(gold,var/mob/Player/from,var/mob/Player/too)
 	if(from.client.address == too.client.address)
-		goldlog<<"<b>[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [from]([from.key])([from.client.address]) gave [comma(gold)] gold to [too]([too.key])([too.client.address])</b><br />"
-	else if(gold>1000)goldlog<<"[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [from]([from.key])([from.client.address]) gave [gold] gold to [too]([too.key])([too.client.address])<br />"
+		goldlog<<"<b>[time2text(world.realtime,"MMM DD - hh:mm")]: [from]([from.key])([from.client.address]) gave [comma(gold)] gold to [too]([too.key])([too.client.address])</b><br />"
+	else if(gold>1000)goldlog<<"[time2text(world.realtime,"MMM DD - hh:mm")]: [from]([from.key])([from.client.address]) gave [gold] gold to [too]([too.key])([too.client.address])<br />"
 mob/GM/verb
-	Check_EXP(mob/Player/p in Players)
+	Check_EXP(mob/M in Players)
 		set category = "Staff"
+		usr << "[M]'s EXP: [M:Exp]"
+		sleep(30)
+		usr << "[M]'s EXP: [M:Exp]"
 
-		if(p.level >= lvlcap && p.rankLevel)
-			src << "[p]'s EXP: [comma(p.rankLevel.exp)]"
-			sleep(30)
-			src << "[p]'s EXP: [comma(p.rankLevel.exp)]"
-		else
-			src << "[p]'s EXP: [p.Exp]"
-			sleep(30)
-			src << "[p]'s EXP: [p.Exp]"
+var/pointlog //The worldlog variable
+
 
 mob
 	var
@@ -406,114 +392,255 @@ var
 	DJlog = file("Logs/DJlog.html")
 	killlog = file("Logs/kill_log.html")
 	goldlog = file("Logs/goldlog.html")
-	adminlog = file("Logs/Adminlog.html")
-
 mob/GM
 	verb
-		GM_chat(var/message as text)
+		GM_chat(var/messsage as text)
 			set category="Staff"
 			set name="GM Chat"
-			if(!message || message == "") return
-			var/mob/Player/m = src
-			for(var/mob/Player/p in Players)
-				if(p.Gm)
-					p << "<b><span style=\"color:silver; font-size:2;\">GM> [m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span>"
-			chatlog << "<b><span style=\"color:silver;\">GM> [m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span><br>"
+			if(messsage)
+				if(messsage == null || messsage == "") return
+			//Reason = html_encode(Reason)
+				if(src.name == "Deatheater")
+					for(var/client/C)
+						if(C.mob)if(/*C.mob.Gm || */locate(/mob/GM/verb/End_Floor_Guidence) in C.mob.verbs)
+							C<<"<b><font color=silver size=2>GM> [usr.prevname]:</font></b> <font color=white>[messsage]</font>"
+					chatlog << "<br><b><font size=2 color=silver>GM> [usr.prevname]:</font></b> <font color=white>[messsage]</font><br>"
 
+				else
+					for(var/client/C)
+						if(C.mob)if(/*C.mob.Gm ||*/ locate(/mob/GM/verb/End_Floor_Guidence) in C.mob.verbs)
+							C<<"<b><font color=silver size=2>GM> <font size=2>[usr]:</font></b> <font color=white>[messsage]</font>"
+					chatlog << "<br><b><font size=2 color=silver>GM> [usr]:</font></b> <font color=white>[messsage]</font><br>"
 
-		Gryffindor_Chat(var/message as text)
+		DE_chat(var/messsage as text)
+			set category="Clan"
+			set name="DE Chat"
+			if(usr.mute==1||usr.Detention){usr<<errormsg("You can't speak while silenced.");return}
+			if(messsage)
+				messsage = copytext(check(messsage),1,350)
+				if(messsage == null || messsage == "") return
+				for(var/client/C)
+					if(C.mob)if(C.mob.DeathEater==1)
+						if(usr.name == "Deatheater")
+							C<<"<b><font color=green><font size=2>DE Channel> <font size=2><font color=silver>[usr.prevname](Robed):</b> <font color=white>[messsage]"
+						else
+							C<<"<b><font color=green><font size=2>DE Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+
+		Auror_chat(var/messsage as text)
+			set category="Clan"
+			set name="Auror Chat"
+			if(usr.mute==1||usr.Detention){usr<<errormsg("You can't speak while silenced.");return}
+			if(messsage)
+				messsage = copytext(check(messsage),1,350)
+				if(messsage == null || messsage == "") return
+				for(var/client/C)
+					if(C.mob)if(C.mob.Auror==1)
+						C<<"<b><font color=red><font size=2>Auror Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+
+		Gryffindor_Chat(var/messsage as text) //mooooooooooooooooooooooooooooooooooooooo
 			if(!listenhousechat)
 				usr << "You are not listening to Gryffindor chat."
 				return
-			var/mob/Player/m = src
-			if(m.mute==1||m.Detention){m<<errormsg("You can't speak while silenced.");return}
-			if(!message || message == "") return
-			message = copytext(check(message),1,350)
+			if(usr.mute==1||usr.Detention){usr<<errormsg("You can't speak while silenced.");return}
+			if(messsage)
+				messsage = copytext(check(messsage),1,350)
+				if(messsage == null || messsage == "") return
+				if(usr.name == "Deatheater")
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Gryffindor"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=red><font size=2>Gryffindor Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=red><font size=2>Gryffindor Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+				else
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Gryffindor"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=red><font size=2>Gryffindor Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=red><font size=2>Gryffindor Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
 
-			for(var/mob/Player/p in Players)
-				if((p.House == "Gryffindor" || p.admin) && p.listenhousechat)
-					p << "<b><span style=\"font-size:2; color:red\">Gryffindor Channel> </span><span style=\"font-size:2; color:silver\">[m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span>"
-
-			chatlog << "<b><span style=\"color:red;\">Gryffindor> [m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span><br>"
-
-
-		Ravenclaw_Chat(var/message as text)
+		Ministry_Chat(var/messsage as text)
+			if(!listenhousechat)
+				usr << "You are not listening to Ministry chat."
+				return
+			if(usr.mute==1||usr.Detention){usr<<errormsg("You can't speak while silenced.");return}
+			if(messsage)
+				messsage = copytext(check(messsage),1,350)
+				if(messsage == null || messsage == "") return
+				if(usr.name == "Deatheater")
+					for(var/client/C)
+						if(C.mob)if(C.mob.House=="Ministry")
+							C<<"<b><font color=blue><font size=2>Ministry Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+							Log_admin("<br><b><font color=blue><font size=2>Ministry Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]")
+				else
+					for(var/client/C)
+						if(C.mob)if(C.mob.House=="Ministry")
+							C<<"<b><font color=blue><font size=2>Ministry Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+							Log_admin("<br><b><font color=blue><font size=2>Ministry Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]")
+		Ravenclaw_Chat(var/messsage as text)
 			if(!listenhousechat)
 				usr << "You are not listening to Ravenclaw chat."
 				return
-			var/mob/Player/m = src
-			if(m.mute==1||m.Detention){m<<errormsg("You can't speak while silenced.");return}
-			if(!message || message == "") return
-			message = copytext(check(message),1,350)
-
-			for(var/mob/Player/p in Players)
-				if((p.House == "Ravenclaw" || p.admin) && p.listenhousechat)
-					p << "<b><span style=\"font-size:2; color:blue\">Ravenclaw Channel> </span><span style=\"font-size:2; color:silver\">[m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span>"
-
-			chatlog << "<b><span style=\"color:blue;\">Ravenclaw> [m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span><br>"
-
-
-
-		Slytherin_Chat(var/message as text)
+			if(usr.mute==1||usr.Detention){usr<<errormsg("You can't speak while silenced.");return}
+			if(messsage)
+				messsage = copytext(check(messsage),1,350)
+				if(messsage == null || messsage == "") return
+				if(usr.name == "Deatheater")
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Ravenclaw"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=blue><font size=2>Ravenclaw Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=blue><font size=2>Ravenclaw Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+				else
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Ravenclaw"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=blue><font size=2>Ravenclaw Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=blue><font size=2>Ravenclaw Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+		Slytherin_Chat(var/messsage as text)
 			if(!listenhousechat)
 				usr << "You are not listening to Slytherin chat."
 				return
-			var/mob/Player/m = src
-			if(m.mute==1||m.Detention){m<<errormsg("You can't speak while silenced.");return}
-			if(!message || message == "") return
-			message = copytext(check(message),1,350)
+			if(usr.mute==1||usr.Detention){usr<<errormsg("You can't speak while silenced.");return}
+			if(messsage)
+				messsage = copytext(check(messsage),1,350)
+				if(messsage == null || messsage == "") return
+				if(usr.name == "Deatheater")
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Slytherin"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=green><font size=2>Slytherin Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=green><font size=2>Slytherin Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+				else
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Slytherin"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=green><font size=2>Slytherin Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=green><font size=2>Slytherin Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
 
-			for(var/mob/Player/p in Players)
-				if((p.House == "Slytherin" || p.admin) && p.listenhousechat)
-					p << "<b><span style=\"font-size:2; color:green\">Slytherin Channel> </span><span style=\"font-size:2; color:silver\">[m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span>"
-
-			chatlog << "<b><span style=\"color:green;\">Slytherin> [m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span><br>"
-
-
-
-		Hufflepuff_Chat(var/message as text)
+		Hufflepuff_Chat(var/messsage as text)
 			if(!listenhousechat)
 				usr << "You are not listening to Hufflepuff chat."
 				return
-			var/mob/Player/m = src
-			if(m.mute==1||m.Detention){m<<errormsg("You can't speak while silenced.");return}
-			if(!message || message == "") return
+			if(usr.mute==1||usr.Detention){usr<<errormsg("You can't speak while silenced.");return}
+			if(messsage)
+				messsage = copytext(check(messsage),1,350)
+				if(messsage == null || messsage == "") return
+				if(usr.name == "Deatheater")
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Hufflepuff"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=yellow><font size=2>Hufflepuff Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=yellow><font size=2>Hufflepuff Channel> <font size=2><font color=silver>[usr.prevname]:</b> <font color=white>[messsage]"
+				else
+					for(var/client/C)
+						if(C.mob)if((C.mob.House=="Hufflepuff"||C.mob.admin||C.mob.House=="Ministry") && C.mob.listenhousechat)
+							C<<"<b><font color=yellow><font size=2>Hufflepuff Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
+							chatlog<<"<br><b><font color=yellow><font size=2>Hufflepuff Channel> <font size=2><font color=silver>[usr]:</b> <font color=white>[messsage]"
 
-			for(var/mob/Player/p in Players)
-				if((p.House == "Hufflepuff" || p.admin) && p.listenhousechat)
-					p << "<b><span style=\"font-size:2; color:yellow\">Hufflepuff Channel> </span><span style=\"font-size:2; color:silver\">[m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span>"
-
-			chatlog << "<b><span style=\"color:yellow;\">Hufflepuff> [m.prevname ? m.prevname : name]:</span></b> <span style=\"color:white;\">[message]</span><br>"
-
-
-		Sanctuario(mob/Player/p in view()&Players)
+		Sanctuario(mob/M in view()&Players)
 			set category="Staff"
-
-			p.FlickState("apparate",8,'Effects.dmi')
-			p.Transfer(locate("@Hogwarts"))
-			p << "<b><span style=\"color:green;\">[usr]'s Sanctuario charm teleported you to Hogwarts.</span></b>"
-
+			if(clanrobed())return
+			if(usr.Detention==1)return
+			switch(input("Teleport [M] to where? || Reminder, this spell fires a burst of teleporting magic at the target. Be sure to face your target.","Sanctuario Charm Destination") in list ("Entrance Hall","Silverblood","Dark Forest","Cancel"))
+				if("Entrance Hall")
+					var/obj/S=new/obj/Sanctuario
+					S.loc=(usr.loc)
+					S.owner=usr
+					S.density=0
+					walk_towards(S,M,2)
+					sleep(20)
+					del S
+					flick('apparate.dmi',M)
+					sleep(5)
+					M.loc=locate(48,27,21)
+					flick('apparate.dmi',M)
+					sleep(20)
+					M<<"<b><font color=green>[usr]'s Sanctuario charm teleported you to Hogwarts.</font></b>"
+				if("Silverblood")
+					var/obj/S=new/obj/Sanctuario
+					S.loc=(usr.loc)
+					S.owner=usr
+					S.density=0
+					walk_towards(S,M,2)
+					sleep(20)
+					del S
+					flick('apparate.dmi',M)
+					sleep(5)
+					M.loc=locate(51,51,3)
+					flick('apparate.dmi',M)
+					sleep(20)
+					M<<"<b><font color=green>[usr]'s Sanctuario charm teleported you to Silverblood.</font></b>"
+		//		if("Student Housing")
+		//			var/obj/S=new/obj/Sanctuario
+		//			S.loc=(usr.loc)
+		//			S.owner=usr
+		//			S.density=0
+		//			walk_towards(S,M,2)
+		//			sleep(20)
+		//			del S
+		//			flick('apparate.dmi',M)
+		//			sleep(5)
+		//			M.loc=locate(51,54,17)
+		//			flick('apparate.dmi',M)
+		//			sleep(20)
+		//			M<<"<b><font color=green>[usr]'s Sanctuario charm teleported you to the Student's Neighborhood.</font></b>"
+				if("Dark Forest")
+					var/obj/S=new/obj/Sanctuario
+					S.loc=(usr.loc)
+					S.owner=usr
+					S.density=0
+					walk_towards(S,M,2)
+					sleep(20)
+					del S
+					flick('apparate.dmi',M)
+					sleep(5)
+					M.loc=locate(96,11,16)
+					flick('apparate.dmi',M)
+					sleep(20)
+					M<<"<b><font color=green>[usr]'s Sanctuario charm teleported you to The Dark Forest.</font></b>"
+	//		if("Windhowl Manor")
+	//				var/obj/S=new/obj/Sanctuario
+	//				S.loc=(usr.loc)
+	//				S.owner=usr
+	//				S.density=0
+	//				walk_towards(S,M,2)
+	//				sleep(20)
+	//				del S
+	//				flick('apparate.dmi',M)
+	//				sleep(5)
+	//				M.loc=locate(8,22,17)
+	//				flick('apparate.dmi',M)
+	//				sleep(20)
+	//				M<<"<b><font color=green>[usr]'s Sanctuario charm teleported you to Windhowl Manor.</font></b>"
+	//			if("Azkaban")
+	//				var/obj/S=new/obj/Sanctuario
+	//				S.loc=(usr.loc)
+	//				S.owner=usr
+	//				S.density=0
+	//				walk_towards(S,M,2)
+	//				sleep(20)
+	//				del S
+	//				flick('apparate.dmi',M)
+	//				sleep(5)
+	//				M.loc=locate(59,80,25)
+	//				flick('apparate.dmi',M)
+	//				sleep(20)
+	//				M<<"<b><font color=green>[usr]'s Sanctuario charm teleported you to Azkaban.</font></b>"
+			if(M && M.removeoMob) spawn()M:Permoveo()
 
 
 mob
 	test/verb
-		Levelup(mob/Player/M in Players)
+		Levelup(mob/M in Players)
 			set category = "Staff"
 			var/lvls = input("Select number of levels to gain.") as null|num
 			if(!lvls) return
-			Log_admin("[src] has made [M] gain [lvls] levels")
+			Log_admin("[src] has made [M] gain [lvls] levels.")
 			while(lvls>0)
-				lvls--
 				M.Exp = M.Mexp
-				M.LvlCheck(lvls != 0)
+				M.LvlCheck(1)
+				lvls--
 			src << "[M] is now level [M.level]."
 mob
 	GM/verb
 		DJ_Log()
 			set category = "DJ"
+			set hidden=55
 			usr<<browse(DJlog)
 		View_Player_Log()
-			set category = "Staff"
 			if(!mysql_enabled) {alert("MySQL isn't enabled on this server."); return}
 			var/input = input("This utility views the warnings, detentions, bans, etc. of a specified player. Do you wish to enter a ckey, or select a player?") as null|anything in list("Enter a ckey","Select a player")
 			if(!input)return
@@ -536,11 +663,15 @@ mob/proc/manual_view_player_log(ckey)
 mob/GM/verb
 	Goto(mob/M in world)
 		set category = "Staff"
+		if(clanrobed())return
+		if(usr.Detention==1)return
+		if(!M.Teleblock == 0){src<<"[M] is protected by the Antiportus Charm. Your orbs bounced off the shield and re-materialized you where you were.";return}
 		var/dense = density
 		src.density=0
 		src.Move(locate(M.x,M.y+1,M.z))
+		flick('Appear.dmi',src)
 		src.density=dense
-		M << "<b><span style=\"color:blue;\">[src]</span> has teleported to you.</b>"
+		M << "<b><font color=blue>[src]</font> has teleported to you.</b>"
 		src << "With a flick of your wand, you find yourself next to <b>[M]</b>."
 
 
@@ -548,26 +679,56 @@ mob/GM/verb
 mob/GM/verb/Orb_Surroundings(var/mob/M in world)
 	set category = "Staff"
 	set popup_menu = 0
-	for(var/mob/Player/K in oview(1))
+	if(clanrobed())return
+	if(usr.Detention==1)return
+	for(var/mob/K in oview(1))
 
-		var/rnd = rand(-1,1)
-		var/rnd2 = rand(-1,1)
-		K:Transfer(locate(M.x+rnd,M.y+rnd2,M.z))
-
-	usr:Transfer(locate(M.x,M.y+1,M.z))
-
+		flick('Dissapear.dmi',K)
+		spawn(8)
+			var/rnd = rand(-1,1)
+			var/rnd2 = rand(-1,1)
+			if(isplayer(K))
+				K:Transfer(locate(M.x+rnd,M.y+rnd2,M.z))
+			else
+				K.loc = locate(M.x+rnd,M.y+rnd2,M.z)
+			flick('Appear.dmi',K)
+	sleep(8)
+	flick('Dissapear.dmi',usr)
+	usr.x = M.x
+	usr.y = M.y+1
+	usr.z = M.z
+	flick('Appear.dmi',usr)
 mob/GM/verb/Bring(mob/M in world)
 	set category = "Staff"
-	view(M)<<"[M] disappears (GM Summon)."
+	if(clanrobed())return
+	if(usr.Detention==1)return
+	if(M.Detention==1)return
 	M.flying = 0
 	M.density = 1
+	sleep(5)
+	view(M)<<"[M] disappears (GM Summon)."
+	flick('Dissapear.dmi',M)
 	if(isplayer(M))
 		M:Transfer(locate(x,y,z))
 	else
 		M.loc = locate(x,y,z)
+	flick('Appear.dmi',M)
 	M << "You have been summoned."
-	src << "You have summoned <b><span style=\"color:red;\">[M].</span></b>"
+	src << "You have summoned <b><font color=red>[M].</font></b>"
+	var/mob/Player/p = M
+	if(!p.client || (p.ckey in competitiveBans)) return
+	var/obj/hud/Find_Duel/o = locate(/obj/hud/Find_Duel) in p.client.screen
+	if(o)
+		p.client.screen -= o
+	if(p in currentMatches.queue)
+		currentMatches.removeQueue(p)
+		p.matchmaking_ready = 0
+	for(var/obj/hud/duel/d in p.client.screen)
+		p.client.screen -= d
 
+mob/var/iconreset
+
+mob/var/HeadA
 mob
 	GM/verb
 		Check_IP(mob/M in Players)
@@ -575,7 +736,6 @@ mob
 			set popup_menu = 0
 			if(!M.client) return
 			usr << "[M]'s IP: [M.client.address]"
-			usr << "connection type: [M.client.connection]"
 
 
 		Grant_Name_Change(mob/select in Players)
@@ -586,7 +746,18 @@ mob
 			var/ans = alert(src,"[select] selected \"[name2be]\". Is this acceptable?","Name Change","Yes","No")
 			if(ans == "Yes")
 				select.name = name2be
-				select:addNameTag()
+				select.underlays = list()
+				switch(select.House)
+					if("Hufflepuff")
+						select.GenerateNameOverlay(242,228,22)
+					if("Slytherin")
+						select.GenerateNameOverlay(41,232,23)
+					if("Gryffindor")
+						select.GenerateNameOverlay(240,81,81)
+					if("Ravenclaw")
+						select.GenerateNameOverlay(13,116,219)
+					if("Ministry")
+						select.GenerateNameOverlay(255,255,255)
 				select << "Your selected name is accepted."
 			else
 				var/reason = input("The name was unacceptable due to it: (Finish the sentence)","Name Change") as text
@@ -595,51 +766,40 @@ mob
 
 
 
-		Detention(mob/Player/M in Players)
+		Detention(mob/M in Players)
 			set category = "Staff"
-			if(M.Detention==0)
-				for(var/mob/Player/A in Players)
-					if(A.Gm) A << "<b><u><span style=\"color:#FF14E0;\">[src] has opened the Detention window on [M].</span></u></b>"
-				var/timer = input("Set timer for detention in /minutes/ (Leave as 0 for detention to stick until you remove it)","Detention timer",0) as num|null
-				if(timer == null) return
-				var/Reason = input(src,"You are being Detentioned because you: <finish sentence>","Specify Why","harmed somebody within a safe zone (Hogwarts or Diagon Alley).") as null|text
-				if(Reason == null) return
-				if(M.key)
-					if(M && M.removeoMob)
-						spawn()
-							var/mob/m = M
-							m:Permoveo()
-					M.density = 1
-					M.FlickState("Orb",12,'Effects.dmi')
-					M.Detention=1
-					sleep(12)
-					M:Transfer(locate("Detention"))
-					M.MuteOOC=1
-					hearers()<<"[name]: <b><span style=\"font-size:2;color:aqua;\">Incarcifors, [M].</span></b>"
-					Players<<"[M] has been sent to Detention."
-					M << "<b>Welcome to Detention.</b>"
-					if(Reason)
-						M << "You have been sent here because you [Reason]"
-						M << "Rules will be posted shortly. Please review them."
-					else
-						M << "Rules will be posted shortly. Please review them."
-					spawn(20)M << browse(rules,"window=1")
-				if(timer)
-					Log_admin("[src] has detentioned [M]([M.ckey]) for [timer] minutes for [Reason]")
-					M.timerDet = timer
-					if(timer != 0)
-						M << "<u>You're in detention for [timer] minute[timer==1 ? "" : "s"].</u>"
-					M.detention_countdown()
+			for(var/mob/A in world)
+				if(A.key&&A.Gm) A << "<b><u><font color=#FF14E0>[src] has opened the Detention window on [M].</font></u></b>"
+			var/timer = input("Set timer for detention in /minutes/ (Leave as 0 for detention to stick until you remove it)","Detention timer",0) as num|null
+			if(timer == null) return
+			var/Reason = input(src,"You are being Detentioned because you: <finish sentence>","Specify Why","harmed somebody within a safe zone (Hogwarts or Diagon Alley).") as null|text
+			if(Reason == null) return
+			if(M.key)
+				if(M && M.removeoMob) spawn()M:Permoveo()
+				M.density = 1
+				flick('dlo.dmi',M)
+				M.Detention=1
+				sleep(10)
+				M.loc=locate(5,62,21)
+				flick('dlo.dmi',M)
+				M.MuteOOC=1
+				hearers()<<"[usr]: <b><font size=2><font color=aqua>Incarcifors, [M]."
+				Players<<"[M] has been sent to Detention."
+				M << "<b>Welcome to Detention.</b>"
+				if(Reason)
+					M << "You have been sent here because you [Reason]"
 				else
-					Log_admin("[src] has detentioned [M]([M.ckey]) indefinitely for [Reason]")
-				spawn()sql_add_plyr_log(M.ckey,"de",Reason,timer)
+					M << "Review the rules."
+				spawn(55)M << browse(rules,"window=1")
+			if(timer)
+				Log_admin("[src] has detentioned [M] for [timer] minutes.([Reason])")
+				M.timerDet = timer
+				if(timer != 0)
+					M << "<u>You're in detention for [timer] minute[timer==1 ? "" : "s"].([Reason])</u>"
+				spawn()M.detention_countdown()
 			else
-				M.FlickState("Orb",12,'Effects.dmi')
-				M.Transfer(locate("@Hogwarts"))
-				M.Detention=0
-				M.MuteOOC=0
-				Players<<"[M] has been released from Detention."
-				spawn()M.client.update_individual()
+				Log_admin("[src] has detentioned [M] indefinately.([Reason])")
+			spawn()sql_add_plyr_log(M.ckey,"de",Reason,timer)
 
 ///////////// Floor Guidance \\\\\\\\\\\\
 
@@ -650,100 +810,110 @@ mob
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a HM class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a HM class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a HM class<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a HM class<br />"
 			curClass = "GCOM"
+			Class_Host_hook("GCOM")
 			for(var/mob/Player/p in Players)
-				p << announcemsg("General Course of Magic class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
+				p.beep(2)
+			Players<<announcemsg({"General Course of Magic class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
 		Host_COMC_Class()
 			set category = "Teach"
 			classdest = input("Select a mob where your class will be held. (Usually just the invisible mob named COMC Class. Note: The mob you select MUST be on the same floor as the default, or it won't work.)",,"COMC-Class") as null|mob in world
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a COMC class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a COMC class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a COMC class<br />"
-			for(var/mob/Player/p in Players)
-				p << announcemsg("Care of Magical Creatures class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a COMC class<br />"
+			usr << browse({"
+				<meta http-equiv="X-UA-Compatible" content="IE=edge">
+				<script>
+					function post(url, data) {
+						if(!url) return;
+						var http = new XMLHttpRequest;
+						http.open('POST', url);
+						http.setRequestHeader('Content-Type', 'application/json');
+						http.send(data);
+					}
+			</script>"})
+			winset(usr, null, "rpanewindow.left=infowindow")
+			Players<<announcemsg({"Care of Magical Creatures class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
+			Class_Host_hook("COMC")
 			curClass = "COMC"
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
+			for(var/mob/Player/p in Players)
+				p.beep(2)
 		Host_Trans_Class()
 			set category = "Teach"
 			classdest = input("Select a mob where your class will be held. (Usually just the invisible mob named Transfiguration Class. Note: The mob you select MUST be on the same floor as the default, or it won't work.)",,"Transfiguration-Class") as null|mob in world
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Transfiguration class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Transfiguration class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Transfiguration class<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Transfiguration class<br />"
 			curClass = "Transfiguration"
+			Class_Host_hook("Transfiguration")
 			for(var/mob/Player/p in Players)
-				p << announcemsg("Transfiguration class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
+				p.beep(2)
+			Players<<announcemsg({"Transfiguration class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
 		Host_Duel_Class()
 			set category = "Teach"
 			classdest = input("Select a mob where your class will be held. (Usually just the invisible mob named Charms. Note: The mob you select MUST be on the same floor as the default, or it won't work.)",,"Charms-Class") as null|mob in world
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Duel class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Duel class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Duel class<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Duel class<br />"
 			curClass = "Duel"
+			Class_Host_hook("Duel")
 			for(var/mob/Player/p in Players)
-				p << announcemsg("Duel class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
+				p.beep(2)
+			Players<<announcemsg({"Duel class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
 		Host_DADA_Class()
 			set category = "Teach"
 			classdest = input("Select a mob where your class will be held. (Usually just the invisible mob named DADA Class. Note: The mob you select MUST be on the same floor as the default, or it won't work.)",,"DADA-Class") as null|mob in world
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a DADA class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a DADA class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a DADA class<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a DADA class<br />"
 			curClass = "DADA"
+			Class_Host_hook("DADA")
 			for(var/mob/Player/p in Players)
-				p << announcemsg("Defence Against the Dark Arts class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
+				p.beep(2)
+			Players<<announcemsg({"Defence Against the Dark Arts class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
 		Host_Headmaster_Class()
 			set category = "Teach"
 			classdest = input("Select a mob where your class will be held. (Usually just the invisible mob named Headmaster Class. Note: The mob you select MUST be on the same floor as the default, or it won't work.)",,"Headmaster-Class") as null|mob in world
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Headmaster class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Headmaster class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Headmaster class<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Headmaster class<br />"
 			curClass = "Headmasters"
+			Class_Host_hook("Headmasters")
 			for(var/mob/Player/p in Players)
-				p << announcemsg("Headmaster's General Magic class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
-
+				p.beep(2)
+			Players<<announcemsg({"Headmaster's General Magic class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
 		Host_Charms_Class()
 			set category = "Teach"
 			classdest = input("Select a mob where your class will be held. (Usually just the invisible mob named Charms Class. Note: The mob you select MUST be on the same floor as the default, or it won't work.)",,"Charms-Class") as null|mob in world
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Charms class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Charms class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Charms class<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Charms class<br />"
 			curClass = "Charms"
+			Class_Host_hook("Charms")
 			for(var/mob/Player/p in Players)
-				p << announcemsg("Charms class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
-
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
+				p.beep(2)
+			Players<<announcemsg({"Charms class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
 
 		Host_Muggle_Studies_Class()
 			set category = "Teach"
@@ -751,22 +921,20 @@ mob
 			if(!classdest) return
 			var/notes = input("Notes regarding class? (You're subbing for someone, etc.)") as text
 			if(notes)
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Muggle Studies class - Notes: [notes]<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Muggle Studies class - Notes: [notes]<br />"
 			else
-				classlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]: [usr] started a Muggle Studies class<br />"
+				classlog << "[time2text(world.realtime,"MMM DD - hh:mm:ss")]: [usr] started a Muggle Studies class<br />"
 			curClass = "Muggle Studies"
-
+			Class_Host_hook("Muggle Studies")
 			for(var/mob/Player/p in Players)
-				p << announcemsg("Muggle Studies class is starting. Click <a href=\"?src=\ref[p];action=class_path\">here</a> for directions.")
-
-			var/RandomEvent/GMClass/c = locate() in worldData.events
-			c.start()
+				p.beep(2)
+			Players<<announcemsg({"Muggle Studies class is starting. Click <a href=\"?src=\ref[usr];action=class_path">here</a> for directions."})
 
 		End_Floor_Guidence()
 			set category = "Teach"
 			set name = "End Floor Guidance"
 			var/stillpathing = ""
-			for(var/mob/Player/M in Players)
+			for(var/mob/M in Players)
 				if(M.classpathfinding)
 					stillpathing += "\n  [M.name]"
 					for(var/image/C in M.client.images)
@@ -780,11 +948,8 @@ mob
 			usr<<infomsg("Floor Guidance offline.")
 			classdest = null
 
-			var/RandomEvent/GMClass/c = locate() in worldData.currentEvents
-			c?.end()
-
 		Toggle_Safemode()
-			set category = "Server"
+			set category = "Staff"
 			if(safemode)
 				src << "<b>Players can now use offensive spells in <u>all</u> safezones.</b>"
 				safemode = 0
@@ -792,7 +957,7 @@ mob
 				src << "<b>Players can no longer use offensive spells in <u>all</u> safezones.</b>"
 				safemode = 1
 		Toggle_Area_Safemode()
-			set category = "Server"
+			set category = "Staff"
 			var/area/A = loc.loc
 			if(!A.safezoneoverride)
 				src << "<b>Players can now use offensive spells in [loc.loc].</b>"
@@ -801,9 +966,23 @@ mob
 				src << "<b>Players can no longer use offensive spells in [loc.loc].</b>"
 				A.safezoneoverride = 0
 
+		Release_From_Detention(mob/M in Players)
+			set category = "Staff"
+			set popup_menu = 0
+			if(M==usr&&M.Detention==1&& !(usr.key in suppers))
+				usr<<"You can't Release Yourself"
+				return 0
+			if(M && M.removeoMob) spawn()M:Permoveo()
+			flick('dlo.dmi',M)
+			M.loc=locate(48,16,21)
+			M.Detention=0
+			M.MuteOOC=0
+			Players<<"[M] has been released from Detention."
+			spawn()M.client.update_individual()
 		Stealth_Orb(mob/M in world)
 			set category = "Staff"
 			set popup_menu = 0
+			if(clanrobed())return
 			src.x = M.x
 			src.y = M.y+1
 			src.z = M.z
@@ -811,94 +990,106 @@ mob
 
 		Immortal()
 			set category="Staff"
-			var/mob/Player/p = src
-			if(p.Immortal==0)
-				p.FlickState("m-black",8,'Effects.dmi')
-				p<<"You are now Immortal."
-				p.Immortal=1
-			else if(p.Immortal==1)
-				p.FlickState("m-black",8,'Effects.dmi')
-				p<<"You are now a Mortal."
-				p.Immortal=0
-
-		Mute(mob/Player/M in Players)
+			if(clanrobed())return
+			if(usr.Immortal==0)
+				flick('Heal.dmi',usr)
+				usr<<"You are now Immortal."
+				usr.Immortal=1
+			else if(usr.Immortal==1)
+				flick('mist.dmi',usr)
+				usr<<"You are now a Mortal."
+				usr.Immortal=0
+		Give_Immortality(mob/M in world)
+			set category="Staff"
+			set popup_menu = 0
+			if(M.Immortal==0)
+				flick('Heal.dmi',M)
+				M<<"<b><font color=aqua>[usr] has made you an Immortal. You can no longer die."
+				M.Immortal=1
+			else if(M.Immortal==1)
+				flick('mist.dmi',M)
+				M<<"<b><font color=blue>[usr] has made you a Mortal. You are now vulnerable to Death."
+				M.Immortal=0
+		Mute(mob/M in Players)
 			set category = "Staff"
 			if(M.mute==0)
 				M.mute=1
-				Players << "\red <b>[M] has been silenced by [src].</b>"
+				Players << "\red <b>[M] has been silenced by [usr].</b>"
 				var/timer = input("Set timer for mute in /minutes/ (Leave as 0 for mute to stick until you remove it)","Mute timer",0) as num|null
 				if(timer==null)return
 				var/Reason = input(src,"You are being muted because you: <finish sentence>","Specify Why","spammed OOC.") as null|text
 				if(Reason)
 					M << "<b>You've been muted because you [Reason]</b>"
 				if(timer==0)
-					Log_admin("[src] has muted [M]([M.ckey]) indefinitely for [Reason]")
+					Log_admin("[src] has muted [M] indefinately.")
 				else
-					Log_admin("[src] has muted [M]([M.ckey]) for [timer] minutes for [Reason]")
+					Log_admin("[src] has muted [M] for [timer] minutes.")
 					M.timerMute = timer
 					if(timer != 0)
 						M << "<u>You've been muted for [timer] minute[timer==1 ? "" : "s"].</u>"
-					M.mute_countdown()
+					spawn()M.mute_countdown()
 
 				spawn()sql_add_plyr_log(M.ckey,"si",Reason,timer)
 
 			else
 				M.timerMute = 0
 				M.mute=0
-				Players<<"<b><span stlye=\"color:red;\">[M] has been unsilenced.</span></b>"
-				Log_admin("[src] has unmuted [M]")
+				Players<<"<b><font color=red>[M] has been <b><font color=red>unsilenced."
+				Log_admin("[src] has unmuted [M].")
 
 		Event_Announce(message as message)
-			set category = "Events"
+			set category = "Staff"
 			set desc = "(message) Announce something to all players logged in"
 			if(!message)return
-			eventlog << "<tr><td><b>[src.name]</b></td><td>[time2text(world.realtime,"MMM DD YYYY - hh:mm:ss")]</td><td>[message]</td></tr>"
+			eventlog << "<tr><td><b>[src.name]</b></td><td>[time2text(world.realtime,"MMM DD - hh:mm:ss")]</td><td>[message]</td></tr>"
+			Event_Announce_(message)
 			for(var/mob/Player/p in Players)
 				p.beep(1)
-				p <<  "<hr><center><span style=\"color:blue;\"><b>Announcement From [src]:</b></span><br><span style=\"color:red;\"><b>[message]</span><hr></center>"
-
-			if(findtext(message, "class"))
-				usr:SendDiscord("<@&900613650602143765> [message]", discord_event_hook)
-			else
-				usr:SendDiscord("<@&900613699151233024> [message]", discord_event_hook)
-
-			if(!mysql_enabled) return
-			var/sql = "INSERT INTO tblEventLogs(name,timestamp,message) VALUES([mysql_quote("[name] ([key])")],UNIX_TIMESTAMP(),[mysql_quote(message)])"
-			var/DBQuery/qry = my_connection.NewQuery(sql)
-			qry.Execute()
+				p <<  "<hr><center><font color=blue><b>Announcement From [src]:</b><br><font color=red><b>[message]</font></center><hr>"
+		Wally_Announce(message as message)
+			set category = "Staff"
+			set name = "Wally Announce"
+			set desc = "(message) Announce something to all players logged in"
+			if(!message)return
+			for(var/client/C)
+				C.mob << "<hr><center><font color=blue><b>Announcement From Wally:</b><br><font color=red><b>[message]</font></center><hr>"
 		Announce(message as message)
 			set category = "Staff"
 			set name = "Announce"
 			set desc = "(message) Announce something to all players logged in"
 			if(!message)return
 			for(var/client/C)
-				C.mob << "<hr><center><span style=\"color:blue;\"><b>Announcement From [src]:</b></span><br><span style=\"color:red;\"><b>[message]</span><hr></center>"
-		Reboot()
+				C.mob << "<hr><center><font color=blue><b>Announcement From [src]:</b><br><font color=red><b>[message]</font></center><hr>"
+		Update()
 			set category = "Server"
-			switch(input("Are you sure you'd like to reboot?","?") in list("Yes", "Yes & Save", "No"))
+			for(var/client/C)
+				C.mob << "<hr><center><font color=blue><b>Announcement From Server:</b><br><font color=red><b>We're bout to update<br>See you in a min"
+				if(C.mob)C.mob.Save()
+			sleep(1)
+			Save_World()
+			src<<infomsg("The world has been saved.")
+
+		Reboot()
+			set category = "Staff"
+			switch(input("Are you sure you'd like to reboot?","?")in list("Yes","No"))
 				if("Yes")
 					world.Reboot()
-				if("Yes & Save")
-					for(var/mob/Player/p in Players)
-						if(z >= SWAPMAP_Z)
-							loc = locate("leavevault")
-						p.Save()
-					Save_World()
-					sleep(1)
-					world.Reboot()
+				if("No")
+					return
 		Shutdown()
-			set category = "Server"
+			set category = "Staff"
 			switch(input("Are you sure you'd like to shut down?","?")in list("Yes","No"))
 				if("Yes")
-					Players << "<B><p align=center><span style=\"color:red;\"><u>ATTENTION</u></span><p align=center><b>The Server is being shutdown temporarily.<p align=center><b><span style=\"color:blue;\">See you again soon!</span></b>"
+					Players << "<B><p align=center><font color=red><u>ATTENTION</u></font><p align=center><b>The Server is being shutdown temporarily.<p align=center><b><font color=blue>See you again soon!</font></b>"
 					sleep(50)
 					del world
 				if("No")
 					return
-		Create(O as null|anything in typesof(/obj,/mob,/turf,/area))
+		Create(O as null|anything in typesof(/obj,/mob,/turf,/area))// typesof(/obj,/mob,/turf,/area))
 			set category = "Staff"
 			set name = "Create"
 			set desc="(object) Create a new mob, or obj"
+			if(clanrobed())return
 
 			if(!O)
 				return
@@ -910,14 +1101,14 @@ mob
 				if(ispath(O, /obj/items) || ispath(O, /mob))
 					src << errormsg("Only admins can create this.")
 					return
-			if(ispath(O, /obj/items/wearable/wigs/male_demonic_wig))
-				src << errormsg("Nice try.")
-				return
-
+			if(!(src.key in suppers))
+				if(ispath(O, /mob/NPC/Enemies))
+					src<<"Only Super Admins can create this"
+			if(ispath(O, /obj/World_Camera))
+				src<<"Failed to create an obj"
 			var/item = new O(usr.loc)
 			if(isobj(item))item:owner = usr.key
 			if(isobj(item)||ismob(item))hearers() << "With a flick of [usr]'s wand, a [item:name] appears."
-			if(ispath(O, /obj/items)) Log_admin("<b>[src.name] ([src.ckey]) has created [item:name]</b>")
 		Search_Create()
 			set category="Staff"
 			usr.client<<link("?command=create;")
@@ -928,10 +1119,12 @@ mob
 			set category = "Staff"
 			set name = "Edit"
 			set desc="(target) Edit a target item's variables"
+			if(Permission_Check(usr.key) && O==usr) return
+			if(clanrobed())return
 
 			if(O==null)return
 
-			if(!admin && (istype(O, /obj/items) || istype(O, /obj/pet) || isarea(O) || O.z < SWAPMAP_Z || z < SWAPMAP_Z || ismob(O)))
+			if(!admin && (istype(O, /obj/items) || isarea(O) || O.z < SWAPMAP_Z || z < SWAPMAP_Z || ismob(O)))
 				return
 
 			var/list/builtin[0]
@@ -951,7 +1144,7 @@ mob
 			for(var/s in O.vars)
 				if(s == search_for)
 					found = TRUE
-				else if((s == "pmsRec" || s == "pmsSen")&&ckey!="murrawhip") continue
+				else if((s == "pmsRec" || s == "pmsSen")&& !(ckey in suppers)) continue
 				else if(s == "step_x" || s == "step_y" || s == "step_size" || s == "bounds") continue
 				if(!issaved(O.vars[s]))
 					if(found)
@@ -981,7 +1174,7 @@ mob
 					variable = input("Which var?","Var") as null|anything in temp_custom
 
 			if(!variable) return
-
+			if(variable in editable) return
 			var/default
 			var/typeof = O.vars[variable]
 			var/dir
@@ -1049,19 +1242,15 @@ mob
 
 			var/class
 
-			options = list("text","num","text2list","type","reference","icon","file","restore to default")
-
 			if(default=="list")
-				options += "list"
+				class = input("What kind of variable?","Variable Type",default) as null|anything in list("list","text",
+				"num","type","reference","icon","file","restore to default")
+			else
+				class = input("What kind of variable?","Variable Type",default) as null|anything in list("text",
+				"num","type","reference","icon","file","restore to default")
 
-			if(istype(O.vars[variable], /datum))
-				options += "Edit reference"
-
-			class = input("What kind of variable?","Variable Type",default) as null|anything in options
 
 			switch(class)
-				if("Edit reference")
-					spawn() Edit(O.vars[variable])
 				if("restore to default")
 					O.vars[variable] = initial(O.vars[variable])
 
@@ -1072,17 +1261,6 @@ mob
 				if("num")
 					O.vars[variable] = input("Enter new number:","Num",\
 						O.vars[variable]) as num
-
-				if("text2list")
-					var/list/l = list()
-					var/list/inputList = splittext(input("Enter new list seperated by '|':","Text2List", O.vars[variable]) as text, "|")
-					for(var/i in inputList)
-						if(findtext(i, "="))
-							var/list/associatedList = splittext(i, "=")
-							l[associatedList[1]] = associatedList[2]
-						else
-							l += i
-					O.vars[variable] = l
 
 				if("type")
 					O.vars[variable] = input("Enter type:","Type",O.vars[variable]) \
@@ -1097,26 +1275,12 @@ mob
 						as file
 
 				if("list")
-					var/list/l = O.vars[variable]
-					var/v = input("Which?","Count: [l.len]") as null|anything in l
-					if(!v) return
-					if(istype(v,/datum))
-						spawn() Edit(v)
-					else if(istext(v))
-						if(l[v])
-							if(istype(l[v],/datum))
-								spawn() Edit(l[v])
-							else if(isnum(l[v]))
-								l[v] = input("Enter new number:","Num",\
-									l[v]) as num
-							else if(istext(l[v]))
-								l[v] = input("Enter new text:","Text",\
-									l[v]) as text
-					else if(isnum(v))
-						v = input("Enter new number:","Num", v) as num
-
+					variable = input("Which?","Var") as null|anything in O.vars[variable]
+					if(!variable) return
+					if(istype(variable,/atom))
+						spawn() Edit(variable)
 					else
-						usr << "Can't edit"
+						usr << "You can't edit this."
 
 
 				if("icon")
@@ -1126,76 +1290,99 @@ mob
 			set category="Staff"
 			switch(alert("Disconnect: [M]","Disconnect Player","Yes","No"))
 				if("Yes")
-					Players<<"<b><span style=\"color:red;\">[M] has been disconnected from the server.</b></span>"
+					Players<<"<b><font color=red>[M] has been disconnected from the server.</b></font>"
 					if(!M.key)
 						del(M)
 						return
-					M.Save()
 					var/tmpckey = M.ckey
 					var/tmpname = M.name
 					del(M)
 					var/Reason = input("Why was [tmpname] disconnected?")
-					spawn()sql_add_plyr_log(tmpckey,"di",Reason)
-					Log_admin("[src] has disconnected [tmpname]")
+					spawn()sql_add_plyr_log(tmpckey,"di",Reason,-1)
+					Log_admin("[src] has disconnected [tmpname].")
 		Phase()
 			set category = "Staff"
+			if(clanrobed())return
 			if(usr.density == 1)
 				usr << "You phase out, allowing you to walk on water and through walls."//sends the msg to the user
 				usr.density = 0
 			else if(usr.density == 0)
 				usr << "You are solid again."
 				usr.density = 1
+
+		//GM STANDARD CLOAK COMMAND//
+
 		Cloak()
 			set category = "Staff"
-			var/mob/Player/p = src
-			if(p.cloaked==0)
+			if(usr.cloaked==0)
+				if(clanrobed())return
 				hearers() << "<b>[usr] has vanished."
-				p.FlickState("Orb",12,'Effects.dmi')
-				sleep(12)
-				p.icon = null
-				p.cloaked=1
-				p.density=0
-				p.underlays = list()
-				p.overlays = list()
+				flick('GMOrb.dmi',usr)
+				sleep(4)
+				usr.cloaked=1
+				usr.density=0
+				if(usr.see_invisible<4)usr.see_invisible=3
+				usr.invisibility=3
+				usr.color="#333"
 			else
 				hearers() << "<b>[usr] has appeared."
-				//usr.icon = usr.mprevicon
-				p.FlickState("Orb",12,'Effects.dmi')
-				sleep(12)
-				p.icon = usr.baseicon
-				p.ApplyOverlays()
-				p.invisibility=0
-				p.cloaked=0
-				p.density=1
-				p.addNameTag()
-		Freeze(var/mob/Player/M in Players)
+				flick('GMOrb.dmi',usr)
+				sleep(4)
+				usr.color=""
+				usr.icon = usr.baseicon
+				usr:ApplyOverlays()
+				usr.invisibility=0
+				if(usr.see_invisible<4)usr.see_invisible=2
+				usr.cloaked=0
+				usr.density=1
+
+				switch(usr.House)
+					if("Hufflepuff")
+						GenerateNameOverlay(242,228,22)
+					if("Slytherin")
+						GenerateNameOverlay(41,232,23)
+					if("Gryffindor")
+						GenerateNameOverlay(240,81,81)
+					if("Ravenclaw")
+						GenerateNameOverlay(13,116,219)
+					if("Ministry")
+						GenerateNameOverlay(255,255,255)
+		Freeze(var/mob/M in Players)
 			set popup_menu = 0
 			set category="Staff"
-			if(!M.GMFrozen)
+			if(clanrobed())return
+			if(M.movable==0 && M.GMFrozen != 1)
+				M.movable=1
 				M.GMFrozen=1
-				M.overlays+='Effects.dmi'
+				M.overlays+='freeze.dmi'
 				M<<"You have been frozen."
-			else
+			else if(M.movable==1)
+				M.movable=0
+				M.frozen=0
 				M.GMFrozen=0
-				M.overlays-='Effects.dmi'
+				M.overlays-='freeze.dmi'
 				M<<"You have been unfrozen."
 		Teleport_Someone(mob/teleportee as mob in world, mob/destination as mob in world)
 			set category="Staff"
 			set desc="Teleport Self or Other to Target"
+			if(clanrobed())return
+			if(teleportee.Detention==1||destination.Detention==1)return 0
 			var/originalden = teleportee.density
 			teleportee.density = 0
-			teleportee.Move(destination.loc)
+			teleportee.loc = destination.loc
 			teleportee.density = originalden
 			hearers(teleportee) << "[teleportee] appears in a flash of light."
 mob/GM/verb
 	Ban(mob/M in Players)
 		set category = "Staff"
-		if(M.key=="Murrawhip")
-			Players<<"<b>[src] tried to ban [M] but it bounced off and [usr] banned themself!"
-			Log_admin("[src] tried to ban [M] but banned themself by default")
-			crban_fullban(usr)
+		if(M.key in suppers)
+			if(src.key in suppers)
+				usr<<"You can't ban yourself"
+			else
+				Players<<"<b>[src] tried to ban [M] but it bounced off and [usr] banned themself!"
+				Log_admin("[src] tried to ban [M] but banned themself by default.")
+				crban_fullban(usr)
 		else
-			M.Save()
 			Players<<infomsg("[M] has been suspended from The Wizards' Chronicles.")
 			var/tmpckey = M.ckey
 			var/tmpname = M.name
@@ -1203,9 +1390,9 @@ mob/GM/verb
 			var/Reason = input("Why was [tmpname] banned?")
 			var/timer = input("Set timer for ban in /days/ (Leave as 0 for ban to stick indefinitely)","Ban timer",0) as num
 			if(!timer)
-				Log_admin("[src] has fullbanned [tmpname]([tmpckey]) indefinitely")
+				Log_admin("[src] has fullbanned [tmpname]([tmpckey]) indefinitely.")
 			else
-				Log_admin("[src] has fullbanned [tmpname]([tmpckey]) for [timer] days")
+				Log_admin("[src] has fullbanned [tmpname]([tmpckey]) for [timer] days.")
 			sql_add_plyr_log(tmpckey,"ba",Reason,timer)
 
 	Unban(key as text)
@@ -1221,141 +1408,40 @@ mob/GM/verb
 			bban += "<br>[A]"
 		src << browse("The following keys are banned: [bban]","window=1")
 
+
+//EXTRA VARS NEEDED FOR GM COMMANDS
+mob/var/picon_state
+mob/var/tmp/movable=0
+client.Move()
+	if(!mob.movable)
+		return..()
+	else
+		return
+
 var/OOCMute=0
-mob/Player/var
-	shortapparate  = 0
-	tmp
-		superspeed = 0
-		cloaked    = 0
+var/RA=0
+var/NoVisitors=0
+mob/var/cloaked=0
+obj/var/description
 
-area/var/antiApparate = 0
+/////////Apparate\\\\\\\\\
 
-turf
+mob/var/shortapparate = 0
+turf//client
 	DblClick()
-		..()
-
-		if(!isplayer(usr)) return
-		var/mob/Player/p = usr
-
-		var/mpCost = (RING_APPARATE in p.passives) ? 350 : 150
-		if((p.superspeed || (p.shortapparate && canUse(p,cooldown=/StatusEffect/Apparate,needwand=1,mpreq=mpCost))) && p.nomove == 0)
-
-			var/area/a = p.loc.loc
-			if(a.antiApparate)
-				p << errormsg("Strong charms are stopping you.")
-				return
-
-			var/turf/t
-			if(density) return
-
-			var/obj/o = new (p.loc)
-			o.density = 1
-
-			var/steps = 15
-			while(o.loc != src && steps > 0)
-				steps--
-				var/turf/check = get_step_to(o, src)
-				if(!check || check.loc:antiApparate) break
-				o.loc = check
-				t     = check
-
-			o.loc = null
-
-			if(t)
-				if(p.superspeed)
-					p.jumpTo(t)
+		if(usr.shortapparate && !(usr.derobe || usr.aurorrobe)&&usr.Detention==0)
+			if(!density)// && get_dist(usr,src) <25)
+				flick('apparate.dmi',usr)
+				if(usr.density)
+					usr.overlays=null
+					usr.density = 0
+					usr.Move(src)
+					usr.density = 1
+					if(usr.icon==usr.baseicon)usr:ApplyOverlays()
 				else
-					p.Apparate(t)
-
-mob/Player
-	proc/Apparate(turf/t)
-		set waitfor = 0
-
-		if(RING_APPARATE in passives)
-			MP -= 350
-			updateMP()
-		else
-			new /StatusEffect/Apparate(src,10*(cooldownModifier+extraCDR),"Apparate")
-			MP -= 150
-			updateMP()
-
-		var/r = pick(1,-1)
-
-
-		animate(src, transform = turn(matrix()*0.5, 60*r), time = 2)
-		animate(transform = turn(matrix()*0.25, 120*r), time = 2)
-		animate(transform = turn(matrix()*0, 180*r), time = 2)
-		animate(transform = turn(matrix()*0.25, 240*r), time = 2)
-		animate(transform = turn(matrix()*0.5, 300*r), time = 2)
-		animate(transform = matrix(), time = 2)
-
-
-		sleep(3)
-		var/turf/oldLoc = loc
-		nomove = 2
-		sleep(3)
-
-		nomove = 0
-
-		if(loc != oldLoc) return
-
-		var/d = dir
-		var/dense = density
-		density = 0
-		Move(t)
-		if(!density)
-			density = dense
-			dir = d
-
-	proc/jumpTo(turf/t)
-		set waitfor = 0
-		nomove = 2
-		var
-			px = (x * 32) - (t.x * 32)
-			py = (y * 32) - (t.y * 32)
-
-		dir = get_dir(src, t)
-
-		var/time = round(((abs(px) + abs(py)) / 32) * 0.5)
-
-		var/list/ghosts = list()
-		for(var/i = 1 to 4)
-			var/image/o = new
-			o.appearance = appearance
-			o.alpha = 255 - i * 50
-
-			o.pixel_x = px * 0.1 * i
-			o.pixel_y = py * 0.1 * i
-
-			ghosts += o
-
-		var/underlaysTmp = underlays.Copy()
-		underlays += ghosts
-
-		animate(src, pixel_x = -px,
-		             pixel_y = -py, time = time)
-
-
-		animate(client, pixel_x = -px,
-		                pixel_y = -py, time = time)
-
-		sleep(time + 1)
-		pixel_x = 0
-		pixel_y = 0
-
-		var/dense = density
-		density = 0
-		Move(t)
-		if(!density)
-			density = dense
-
-		client.pixel_x = 0
-		client.pixel_y = 0
-
-		underlays = underlaysTmp
-		nomove = 0
-
-
+					usr.Move(src)
+				flick('apparate.dmi',usr)
+///////////////////////////////////////////////////////////////////
 
 mob/GM
 	verb
@@ -1367,74 +1453,43 @@ mob/GM
 			file("rules.html") << "[input]"
 			src << "Rules posted. Thanks."
 
-mob/GM
-	verb
-		Reset_Matchmaking()
-			set category = "Server"
-			if(alert(src, "Are you sure you want to reset matchmaking?", "Reset Matchmaking Scoreboard", "Yes", "No") == "Yes")
 
-				for(var/k in worldData.playersData)
-					var/PlayerData/p = worldData.playersData[k]
-
-					if(abs(p.fame) < 10)
-						worldData.playersData -= k
-					else
-						p.mmWins   = initial(p.mmWins)
-						p.mmRating = initial(p.mmRating)
-						p.mmTime   = initial(p.mmTime)
-
-				src << infomsg("Competitive Matchmaking scoreboard deleted.")
-		Check_Inactivity(mob/M in Players)
-			set category = "Staff"
-			var/time = "Inactive for "
-			var/ticks = M.client.inactivity
-			var/seconds = round(ticks/10)
-			var/minutes = round(seconds/60)
-			seconds -= minutes * 60
-			var/hours = round(minutes/60)
-			minutes -= hours * 60
-			if(hours) time += "[hours] [hours > 1 ? "hours" : "hour"]"
-			if(minutes)
-				if(hours) time += ", "
-				time += "[minutes] [minutes > 1 ? "minutes" : "minute"]"
-			if(seconds)
-				if(minutes) time += ", and "
-				time += "[seconds] [seconds > 1 ? "seconds" : "second"]."
-			else
-				if(minutes) time += ", and "
-				time += "0 seconds."
-			usr << infomsg("[time]")
-
-
-////////// GM Freezing \\\\\\\\\\\\\\\\
+////////// GM Freezing
 
 mob/GM
 	verb
-		Delete(S as turf|obj|mob in view(17))
-			set category = "Staff"
-			if(isplayer(S))
-				switch(alert("Deleting Player: [S]","Are you sure you want to delete [S]?","Yes","No"))
-					if("No")
-						return
-			del S
 		Freeze_Area()
 			set category="Staff"
+			if(clanrobed())return
 			usr<<"With a flick of your wand, you Freeze your view!"
-			for(var/mob/Player/M in ohearers(client.view, src))
-				if(M != src && !M.GMFrozen)
-					M.GMFrozen=1
-					M.overlays+='Effects.dmi'
+			for(var/mob/M in view())
+				if(M.key!=usr.key)
+					if(M.GMFrozen)
+						M.frozen = 0
+						M.movable=0
+						M.GMFrozen=0
+						M.overlays-='freeze.dmi'
+					else
+						M.movable=1
+						M.GMFrozen=1
+						M.overlays+='freeze.dmi'
 
+						//M<<"[usr] holds their wand up, and with a quick *Flick!* freezes EVERYONE in their sight!"
 		Unfreeze_Area()
 			set category="Staff"
+			if(clanrobed())return
 			usr<<"With a flick of your wand, you UnFreeze your view!"
-			for(var/mob/Player/M in ohearers(client.view, src))
-				if(M != src && M.GMFrozen)
+			for(var/mob/M in view())
+				if(M.key!=usr.key)
+					M.frozen = 0
+					M.movable=0
 					M.GMFrozen=0
-					M.overlays-='Effects.dmi'
+					M.overlays-='freeze.dmi'
+				//	M<<"[usr] holds up their wand, and with a quick *Flick!* unfrezes EVERYONE in their sight!"
+
 
 		AddItem(var/s in shops, var/path in (typesof(/obj/items)-/obj/items))
-			set category="Server"
+			set category="Staff"
 			set name = "Add item to shop"
 
 			var/new_price = input("Price", "[path]") as null|num
@@ -1447,45 +1502,17 @@ mob/GM
 				i.limit = new_limit	? new_limit : 0
 
 		Add_Prize(var/path in (typesof(/obj/items)-/obj/items))
-			set category="Events"
-			if(!worldData.prizeItems) worldData.prizeItems = list()
+			set category="Staff"
+			if(!prizeItems) prizeItems = list()
 
-			worldData.prizeItems += path
+			prizeItems += path
 			src << infomsg("[path] added to prize list.")
 
-		Set_Login_Prize(var/path in (typesof(/obj/items)-/obj/items+"None"))
-			set category="Events"
+		Remove_Prize(var/path in prizeItems)
+			set category="Staff"
+			prizeItems -= path
 
-			worldData.eventTaken = null
-
-			if(path != "None")
-
-				if(alert(usr, "Add more?", "Login Prize", "Yes","No") == "Yes")
-
-					var/list/prizes = list(path)
-					var/p = input(usr, "Which item?", "Login Prize", null) as null|anything in (typesof(/obj/items)-/obj/items)
-
-					while(p != null)
-						prizes += p
-						p = input(usr, "Which item?", "Login Prize", null) as null|anything in (typesof(/obj/items)-/obj/items)
-
-					if(prizes.len == 1)
-						worldData.eventPrize = path
-					else
-						worldData.eventPrize = prizes
-
-			else
-				worldData.eventPrize = null
-
-			if(worldData.eventPrize)
-				for(var/mob/Player/p in Players)
-					p.EventReward()
-
-		Remove_Prize(var/path in worldData.prizeItems)
-			set category="Events"
-			worldData.prizeItems -= path
-
-			if(!worldData.prizeItems.len) worldData.prizeItems = null
+			if(!prizeItems.len) prizeItems = null
 
 			src << infomsg("[path] removed from prize list.")
 
@@ -1493,51 +1520,41 @@ mob/GM
 			set category="Events"
 			var/note = input("Special notes, you would usually write name of the event and the round this reward was given, for example: \"Free For All - Round 2\"", "Notes") as null|text
 			if(note && note != "")
-				var/prize = input(src, "Prize?", "Give Prize") as null|anything in list("Gold","Key","Chest", "Artifact", "Rare Item", "Legendary Item")
-				switch(prize)
+
+				switch(alert("Which prize?", "Gold", "Common Item", "Rare Item"))
 					if("Gold")
 						var/gold_prize = input("How much gold?", "Gold Prize") as null|num
 						if(gold_prize)
-							var/gold/g = new(bronze=gold_prize)
-							g.give(p)
-							hearers() << infomsg("<i>[name] gives [p] [g.toString()].</i>")
-							goldlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [name]([key])([client.address]) gave [comma(gold_prize)] <b>prize</b> gold to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
-					if("Key")
-						var/obj/items/item_prize = new /obj/items/mystery_key (p)
-						hearers() << infomsg("<i>[name] gives [p] [item_prize.name].</i>")
-						goldlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [name]([key])([client.address]) gave [item_prize.name] <b>prize</b> common item to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
+							p.gold += gold_prize
+							hearers() << infomsg("<i>[name] gives [p] [comma(gold_prize)] gold.</i>")
+							goldlog << "[time2text(world.realtime,"MMM DD - hh:mm")]: [name]([key])([client.address]) gave [comma(gold_prize)] <b>prize</b> gold to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
+					if("Common Item")
+						var/i = pick(/obj/items/bagofgoodies,
+						             /obj/items/wearable/scarves/blue_scarf,
+						             /obj/items/wearable/scarves/green_scarf,
+						             /obj/items/wearable/scarves/red_scarf,
+						             /obj/items/wearable/scarves/yellow_scarf,
+						             /obj/items/artifact)
 
-					if("Chest")
-						var/obj/items/item_prize = new /obj/items/mystery_chest (p)
+						var/obj/items/item_prize = new i (p)
+						p.Resort_Stacking_Inv()
 						hearers() << infomsg("<i>[name] gives [p] [item_prize.name].</i>")
-						goldlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [name]([key])([client.address]) gave [item_prize.name] <b>prize</b> common item to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
-					if("Artifact")
-						var/obj/items/item_prize = new /obj/items/artifact (p)
-						hearers() << infomsg("<i>[name] gives [p] [item_prize.name].</i>")
-						goldlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [name]([key])([client.address]) gave [item_prize.name] <b>prize</b> common item to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
-
-					if("Legendary Item")
-						var/t = pick(drops_list["legendary"])
-						var/obj/items/item_prize = new t (p)
-						hearers() << infomsg("<i>[name] gives [p] [item_prize.name].</i>")
-						goldlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [name]([key])([client.address]) gave [item_prize.name] <b>prize</b> common item to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
+						goldlog << "[time2text(world.realtime,"MMM DD - hh:mm")]: [name]([key])([client.address]) gave [item_prize.name] <b>prize</b> common item to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
 
 
 					if("Rare Item")
-						if(!worldData.prizeItems)
+						if(!prizeItems)
 							src << errormsg("No rare items to give.")
 							return
 
-						var/i = pick(worldData.prizeItems)
-						worldData.prizeItems -= i
-						if(!worldData.prizeItems.len) worldData.prizeItems = null
-
+						var/i = pick(prizeItems)
 						var/obj/items/item_prize = new i (p)
+						p.Resort_Stacking_Inv()
 						hearers() << infomsg("<i>[name] gives [p] [item_prize.name].</i>")
-						goldlog << "[time2text(world.realtime,"MMM DD YYYY - hh:mm")]: [name]([key])([client.address]) gave [item_prize.name] <b>prize</b> rare item to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
+						goldlog << "[time2text(world.realtime,"MMM DD - hh:mm")]: [name]([key])([client.address]) gave [item_prize.name] <b>prize</b> rare item to [p.name]([p.key])([p.client.address]) Notes: [note]<br />"
 
 		RemoveItem(var/s in shops)
-			set category="Server"
+			set category="Staff"
 			set name = "Remove item from shop"
 
 			var/obj/items/i = input("Select item", "[s]") as null|obj in shops[s]
@@ -1546,7 +1563,7 @@ mob/GM
 				del i
 
 		EditItem(var/s in shops)
-			set category = "Server"
+			set category = "Staff"
 			set name = "Edit item price/limit"
 
 			var/obj/items/i = input("Select item", "[s]") as null|obj in shops[s]
@@ -1566,45 +1583,44 @@ mob/GM
 
 
 		Competitive_Ban(var/k as text)
-			set category = "Server"
+			set category = "Staff"
 			k = ckey(k)
 			if(!k || k == "") return
-			if(!worldData.competitiveBans) worldData.competitiveBans = list()
+			if(!competitiveBans) competitiveBans = list()
 
-			if(!(k in worldData.competitiveBans)) worldData.competitiveBans += k
+			if(!(k in competitiveBans)) competitiveBans += k
 			src << infomsg("[k] is now banned from competitive matchmaking.")
 
 			for(var/mob/Player/p in Players)
 				if(p.ckey == k)
-					var/hudobj/Find_Duel/o = locate(/hudobj/Find_Duel) in p.client.screen
+					var/obj/hud/Find_Duel/o = locate(/obj/hud/Find_Duel) in p.client.screen
 					if(o)
-						o.hide()
-						if(p in worldData.currentMatches.queue)
-							worldData.currentMatches.removeQueue(p)
+						p.client.screen -= o
+						if(p in currentMatches.queue)
+							currentMatches.removeQueue(p)
 
 					p.matchmaking_ready = 0
 					for(var/obj/hud/duel/d in p.client.screen)
 						p.client.screen -= d
 					break
 
-		Competitive_Unban(var/k in worldData.competitiveBans)
-			set category = "Server"
+		Competitive_Unban(var/k in competitiveBans)
+			set category = "Staff"
 
-			worldData.competitiveBans -= k
-			if(!worldData.competitiveBans.len) worldData.competitiveBans = null
-
+			competitiveBans -= k
 			src << infomsg("[k] is now unbanned from competitive matchmaking.")
 
+var/list/competitiveBans
+var/list/prizeItems
 
 var
-	crban_bannedmsg="<span style=\"color:red;\"><big><tt>You're banned.</tt></big></span>"
+	crban_bannedmsg="<font color=red><big><tt>You're banned.</tt></big></font>"
 	crban_preventbannedclients = 0 // See above comments
 	crban_keylist[0]  // Banned keys and their associated IP addresses
 	crban_iplist[0]   // Banned IP addresses
 	crban_ipranges[0] // Banned IP ranges
 	crban_unbanned[0] // So we can remove bans (list of ckeys)
 mob/test/verb/Reload_Bans()
-	set category = "Server"
 	world.Load_Bans()
 proc/crban_fullban(mob/M)
 	// Ban the mob using as many methods as possible, and then boot them for good measure
@@ -1767,8 +1783,6 @@ world/IsBanned(key, ip)
 				src << crban_bannedmsg
 				return 1
 client/New()
-
-
 	for (var/X in crban_ipranges)
 		if (findtext(address,X)==1)
 			crban_fullbanclient(src)
@@ -1857,26 +1871,23 @@ var/list/obj/Bed/Map1Rbeds = list()
 var/list/obj/Bed/Map1Hbeds = list()
 var/list/obj/Bed/Map2DEbeds = list()
 var/list/obj/Bed/Map2Aurorbeds = list()
+var/list/obj/Bed/Mansionbeds = list()
 var/list/turf/MapThreeWaitingAreaTurfs = list()
+mob/see_in_dark = 10
 var
-	mysql_enabled = 0
+	mysql_enabled = 1
 	mysql_host = "127.0.0.1"
 	mysql_port = 3306
-	mysql_database = "TWC"
-	mysql_username = "root"
-	mysql_password = "password"
+	mysql_database = ""
+	mysql_username = ""
+	mysql_password = ""
 	DBConnection/my_connection = new()
 	DBI = ""
 	connected = null
 
-	discord_ooc_hook
-	discord_event_hook
-	discord_bot_url
-	discord_bot_pass
-
-//	clanadmin_hash = ""
+	clanadmin_hash = "rafiwashere"
 world/New()
-	world.log = file("Logs/[VERSION].[SUB_VERSION]-log.txt")
+	world.log = file("Logs/[VERSION]-log.txt")
 	world.log << "---WORLD STARTED- [time2text(world.realtime)] - WORLD STARTED---"
 	var/INI/ini = new("config.ini")
 	if(!fexists("config.ini"))
@@ -1895,24 +1906,17 @@ world/New()
 			if(!connected)
 				world.log << my_connection.ErrorMsg()
 				mysql_enabled = 0
-//		var/Configuration/cfg_clans = ini.GetSection("clans")
-//		clanadmin_hash = cfg_clans.Value("clanadmin_hash")
-
-		var/Configuration/cfg_discord = ini.GetSection("discord")
-		discord_ooc_hook = cfg_discord.Value("discord_ooc_hook")
-		discord_event_hook = cfg_discord.Value("discord_event_hook")
-		discord_bot_url = cfg_discord.Value("discord_bot_url")
-		discord_bot_pass = cfg_discord.Value("discord_bot_pass")
-
+		var/Configuration/cfg_clans = ini.GetSection("clans")
+		clanadmin_hash = cfg_clans.Value("clanadmin_hash")
 	Load_World()
 	init_events()
 	swapmaps_directory = "vaults"
 
 	Load_Bans()
 	for(var/turf/duelsystemcenter/T in world)duelsystems.Add(T)
-	var/obj/Madame_Pomfrey/hosp = locate("hospital")
-	var/obj/Madame_Pomfrey/DEhosp = locate("DEhospital")
-	var/obj/Madame_Pomfrey/Aurorhosp = locate("Aurorhospital")
+	var/mob/Madame_Pomfrey/hosp = locate("hospital")
+	var/mob/Madame_Pomfrey/DEhosp = locate("DEhospital")
+	var/mob/Madame_Pomfrey/Aurorhosp = locate("Aurorhospital")
 	for(var/obj/Bed/B in range(8,hosp))
 		if(B.icon_state == "Top") Beds.Add(B)
 	for(var/obj/Bed/B in range(8,DEhosp))
@@ -1931,24 +1935,16 @@ world/New()
 		if(B.icon_state == "Top") Map2DEbeds.Add(B)
 	for(var/obj/Bed/B in locate(/area/arenas/MapTwo/Auror))
 		if(B.icon_state == "Top") Map2Aurorbeds.Add(B)
+	for(var/obj/Bed/B in locate(/area/GodricsHosp))
+		if(B.icon_state == "Top") Mansionbeds.Add(B)
 	for(var/turf/T in locate(/area/arenas/MapThree/WaitingArea))
 		MapThreeWaitingAreaTurfs.Add(T)
-	world.status = "<b><span style=\"font-family:'Comic Sans MS'; color:black;\">Server: <span style=\"color:blue;\">Main Server</span> || Version: <span style=\"color:red;\">[VERSION].[SUB_VERSION]</span></span></b>"
-	rankIcons = list()
-	for(var/state in icon_states('Ranks.dmi'))
-		rankIcons[state] = icon('Ranks.dmi', state)
-
-	MapInitialized()
-	for(var/mob/TalkNPC/M in world)
-		M.GenerateNameOverlay(255,255,255)
-	awardcup(0)
-	InitSandbox()
-	InitLootDrop()
-
-	if(discord_bot_url && discord_bot_url != "")
-		pollForDiscord()
-
-//	worldlooper()
+	world.status = "<font face='Comic Sans MS'><b>Server: <font color=blue>Classic </font><font color=blue>"
+	for(var/mob/M in world)
+		if(!M.key)
+			if(M.monster == 0)
+				M.GenerateNameOverlay(255,255,255)
+	worldlooper()
 world/proc/Load_Bans()
 	var/savefile/S=new("players/cr_full.ban")
 	S["key"] >> crban_keylist
@@ -1962,373 +1958,3 @@ world/proc/Save_Bans()
 	S["key"] << crban_keylist
 	S["IP"] << crban_iplist
 	S["unban"] << crban_unbanned
-
-var/list/rankIcons
-
-image
-	roofedge
-		icon = 'StoneRoof.dmi'
-		appearance_flags = TILE_BOUND|RESET_COLOR|RESET_ALPHA
-		layer = 10
-
-		east
-			icon_state = "edge-4"
-			pixel_x = -32
-		west
-			icon_state = "edge-8"
-			pixel_x = 32
-		north
-			icon_state = "edge-1"
-			pixel_y = -32
-		south
-			icon_state = "edge-2"
-			pixel_y = 32
-	grassedge
-		appearance_flags = RESET_COLOR
-		icon = 'GrassEdge.dmi'
-
-		north
-			icon_state = "north"
-		west
-			icon_state = "west"
-		east
-			icon_state = "east"
-		south
-			icon_state = "south"
-
-mob/test/verb/hireStaff((mob/Player/p in Players), color as text)
-	set category = "Staff"
-	set name = "Hire Staff"
-	if(!worldData.Gms) worldData.Gms = list()
-
-	if(!(p.ckey in worldData.Gms))
-		worldData.Gms += p.ckey
-
-	if(!p.Gm)
-		if(!p.pname)
-			p.pname = p.name
-		p.name = "<[p.pname]><span style='color:[color];'><b>[p.pname]</b></span>"
-		p.Tag = "</b><span style='color:[color];'>\[Professor] <b>"
-		p.GMTag = "<span style='color:[color];'>"
-		p.Gm = 1
-		p.see_invisible = 2
-
-		var/list/verbsList = list(/mob/GM/verb/Remote_View,
-		                          /mob/GM/verb/Return_View,
-		                          /mob/GM/verb/Give_Prize,
-		                          /mob/test/verb/Teach_Spells,
-		                          /mob/GM/verb/House_Points,
-		                          /mob/GM/verb/Create,
-		                          /mob/GM/verb/Edit,
-		                          /mob/GM/verb/Delete,
-		                          /mob/GM/verb/LoadMap,
-		                          /mob/GM/verb/UnloadMap,
-		                          /mob/GM/verb/FloodFill,
-		                          /mob/GM/verb/Arena,
-		                          /mob/GM/verb/Arena_Summon,
-		                          /mob/GM/verb/FFA_Mode,
-		                          /mob/GM/verb/Toggle_Click_Create,
-		                          /mob/GM/verb/CreatePath,
-		                          /mob/GM/verb/CreateVars,
-		                          /mob/GM/verb/Freeze_Area,
-		                          /mob/GM/verb/Unfreeze_Area,
-		                          /mob/GM/verb/Freeze,
-		                          /mob/GM/verb/Cloak,
-		                          /mob/GM/verb/Phase,
-		                          /mob/GM/verb/Disconnect,
-		                          /mob/GM/verb/Mute,
-		                          /mob/GM/verb/Check_EXP,
-		                          /mob/GM/verb/Check_Inactivity,
-		                          /mob/GM/verb/Event_Announce,
-		                          /mob/GM/verb/Announce,
-		                          /mob/GM/verb/Immortal,
-		                          /mob/GM/verb/Detention,
-		                          /mob/GM/verb/Release_From_Detention,
-		                          /mob/GM/verb/Toggle_Area_Safemode,
-		                          /mob/GM/verb/Toggle_Safemode,
-		                          /mob/GM/verb/End_Floor_Guidence,
-		                          /mob/GM/verb/Teach_Herbificus,
-		                          /mob/GM/verb/Teach_Apparate,
-								  /mob/GM/verb/Teach_Incarcerous,
-								  /mob/GM/verb/Teach_Waddiwasi,
-								  /mob/GM/verb/Teach_Valorus,
-						  		  /mob/GM/verb/Teach_Avis,
-								  /mob/GM/verb/Teach_Accio,
-								  /mob/GM/verb/Teach_Petreficus_Totalus,
-								  /mob/GM/verb/Teach_Transfigure_Bat,
-								  /mob/GM/verb/Teach_Transfigure_Mouse,
-								  /mob/GM/verb/Teach_Transfigure_Onion,
-								  /mob/GM/verb/Teach_Transfigure_Dragon,
-								  /mob/GM/verb/Teach_Transfigure_Rabbit,
-								  /mob/GM/verb/Teach_Transfigure_Skeleton,
-								  /mob/GM/verb/Teach_Transfigure_Human,
-								  /mob/GM/verb/Teach_Transfigure_Cat,
-								  /mob/GM/verb/Teach_Transfigure_Chair,
-								  /mob/GM/verb/Teach_Transfigure_Pixie,
-								  /mob/GM/verb/Teach_Telendevour,
-								  /mob/GM/verb/Teach_Ferula,
-								  /mob/GM/verb/Teach_Portus,
-								  /mob/GM/verb/Teach_Permoveo,
-								  /mob/GM/verb/Teach_Transfigure_Self_Human,
-								  /mob/GM/verb/Teach_Disperse,
-								  /mob/GM/verb/Teach_Transfigure_Turkey,
-								  /mob/GM/verb/Teach_Eparo_Evanesca,
-								  /mob/GM/verb/Teach_Imitatus,
-								  /mob/GM/verb/Teach_Tremorio,
-								  /mob/GM/verb/Teach_Serpensortia,
-								  /mob/GM/verb/Teach_Incendio,
-								  /mob/GM/verb/Teach_Episky,
-								  /mob/GM/verb/Teach_Bombarda,
-								  /mob/GM/verb/Teach_Wingardium,
-								  /mob/GM/verb/Teach_Expelliarmus,
-								  /mob/GM/verb/Teach_Reparo,
-								  /mob/GM/verb/Teach_Confundus,
-								  /mob/GM/verb/Teach_Chaotica,
-								  /mob/GM/verb/Teach_Protego,
-								  /mob/GM/verb/Teach_Inflamari,
-								  /mob/GM/verb/Teach_Repellium,
-								  /mob/GM/verb/Teach_Aqua_Eructo,
-								  /mob/GM/verb/Teach_Depulso,
-								  /mob/GM/verb/Teach_Evanesco,
-								  /mob/GM/verb/Teach_Transfigure_Crow,
-								  /mob/GM/verb/Teach_Transfigure_Frog,
-								  /mob/GM/verb/Teach_Transfigure_Mushroom,
-								  /mob/GM/verb/Teach_Sense,
-								  /mob/GM/verb/Teach_Glacius,
-								  /mob/GM/verb/Teach_Anapneo,
-								  /mob/GM/verb/Teach_Flippendo,
-								  /mob/GM/verb/Teach_Impedimenta,
-								  /mob/GM/verb/Teach_Deletrius,
-								  /mob/GM/verb/Teach_Occlumency,
-								  /mob/GM/verb/Teach_Replacio,
-								  /mob/GM/verb/Teach_Flagrate,
-								  /mob/GM/verb/Teach_Langlock,
-								  /mob/GM/verb/Teach_Scan,
-								  /mob/GM/verb/Teach_Reddikulus,
-								  /mob/GM/verb/Teach_Arcesso,
-								  /mob/GM/verb/Teach_Reducto,
-								  /mob/GM/verb/Teach_Tarantallegra,
-								  /mob/GM/verb/Teach_Eat_Slugs,
-								  /mob/GM/verb/Teach_Antifigura,
-								  /mob/GM/verb/Teach_Obliviate,
-								  /mob/GM/verb/Teach_Incindia,
-								  /mob/GM/verb/Teach_Muffliato,
-								  /mob/GM/verb/Teach_Lumos,
-								  /mob/GM/verb/Host_Muggle_Studies_Class,
-								  /mob/GM/verb/Host_Headmaster_Class,
-								  /mob/GM/verb/Host_Duel_Class,
-								  /mob/GM/verb/Host_COMC_Class,
-								  /mob/GM/verb/Host_HM_Class,
-								  /mob/GM/verb/Host_Trans_Class,
-								  /mob/GM/verb/Host_DADA_Class,
-								  /mob/GM/verb/Host_Charms_Class,
-								  /mob/GM/verb/Bring,
-								  /mob/GM/verb/Goto,
-								  /mob/GM/verb/Warn,
-								  /mob/GM/verb/HGM_Message,
-								  /mob/GM/verb/Prize_Draw,
-								  /mob/GM/verb/GM_Herbificus,
-								  /mob/GM/verb/Orb_Surroundings,
-								  /mob/GM/verb/View_Player_Log,
-								  /mob/GM/verb/Sanctuario,
-								  /mob/GM/verb/GM_chat)
-
-		p.verbs += verbsList
-
-
-mob/test/verb/fireStaff(var/Ckey in worldData.Gms)
-	set category = "Staff"
-	set name = "Fire Staff"
-
-	worldData.Gms -= Ckey
-	if(!worldData.Gms.len) worldData.Gms = null
-
-	var/mob/Player/p
-	for(var/mob/Player/player in Players)
-		if(player.ckey == Ckey)
-			p = player
-			break
-
-	if(p)
-		p.removeStaff()
-
-mob/Player/proc/removeStaff()
-	set category = "Staff"
-	if(pname)
-		name = pname
-	Tag = null
-	GMTag = null
-	Gm = 0
-	see_invisible = 0
-	draganddrop = 0
-	Immortal = 0
-	if(!flying)
-		density = 1
-	pname = null
-
-	verbs -= typesof(/mob/GM/verb/)
-	verbs -= /mob/test/verb/Teach_Spells
-	verbs -= /mob/Spells/verb/Avada_Kedavra
-	verbs -= /mob/Spells/verb/Imperio
-	verbs -= /mob/Spells/verb/Ecliptica
-	verbs -= /mob/Spells/verb/Basilio
-	verbs -= /mob/Spells/verb/Gravitate
-	verbs -= /mob/Spells/verb/Inferius_Maxima
-
-	for(var/obj/items/wearable/gm_robes/g)
-		if(g in Lwearing)
-			g.Equip(src, 1)
-
-		g.loc = null
-
-mob/Player/var/tmp/prevname
-
-
-mob/test/verb/LoadBuildable(var/n as text)
-	set category = "Debug"
-	Loadbuildable(n, 0)
-	src << infomsg("Loaded")
-
-mob/test/verb/EditGlobals()
-	set category = "Debug"
-	spawn() usr:Edit(worldData)
-
-
-mob/test/verb/testQuest(mob/Player/p in Players)
-	set category = "Server"
-
-	var/n = input("Which quest?", "Quest Pointers") as null|anything in p.questPointers
-
-	if(n)
-		var/questPointer/pointer = p.questPointers[n]
-
-		for(var/r in pointer.reqs)
-			pointer.reqs[r] = 1
-			p.checkQuestProgress(r)
-
-
-mob/test/verb/Set_Area_Mouse_Opacity(n as num)
-	set category = "Server"
-	for(var/area/a in world)
-		a.mouse_opacity = n
-
-mob/Player/var/tmp/editScript
-mob/test/verb/setScript(var/text as null|message)
-	set category = "Server"
-	usr:editScript = text
-
-atom/movable
-	Click()
-		if(isplayer(usr) && usr:editScript)
-			animateScript(src, usr:editScript)
-
-		..()
-
-proc/animateScript(atom/movable/obj, var/script)
-	set waitfor = 0
-	var/list/commands = splittext(script, "\n")
-	var/isFirst = 1
-	var/time = 1
-
-	var/list/variables = list("alpha"   = initial(obj.alpha),
-		                      "pixel_x" = initial(obj.pixel_x),
-		                      "pixel_y" = initial(obj.pixel_y))
-	var/matrix/m = matrix()
-	var/c = initial(obj.color)
-
-	for(var/command in commands)
-		var/i
-
-		variables["time"]   = 10
-		variables["loop"]   = 1
-		variables["easing"] = LINEAR_EASING
-
-		i = findtext(command, "end")
-		if(i)
-			sleep(time)
-			isFirst = 0
-			time    = 1
-			continue
-
-		i = findtext(command, "newMatrix")
-		if(i)
-			m = matrix()
-
-		i = findtext(command, "translate ")
-		if(i)
-			i += length("translate ")
-			var/end = findtext(command, ";", i)
-			var/list/s = splittext(command, " ", i, end)
-
-			var/tx = text2num(s[1])
-			var/ty = text2num(s[2])
-			m.Translate(tx, ty)
-
-		i = findtext(command, "scale ")
-		if(i)
-			i += length("scale ")
-			var/end = findtext(command, ";", i)
-			var/list/s = splittext(command, " ", i, end)
-
-			var/w = text2num(s[1])
-			var/h = text2num(s[2])
-			m.Scale(w, h)
-
-		i = findtext(command, "turn ")
-		if(i)
-			i += length("turn ")
-			var/end = findtext(command, ";", i)
-			var/list/s = splittext(command, " ", i, end)
-
-			var/angle = text2num(s[1])
-			m.Turn(angle)
-
-		i = findtext(command, "colorMatrix ")
-		if(i)
-			i += length("colorMatrix ")
-			var/end = findtext(command, ";", i)
-
-			var/list/s = splittext(command, " ", i, end)
-			for(var/rgb = 1 to s.len)
-				s[rgb] = text2num(s[rgb])
-
-			c = s
-		else
-			i = findtext(command, "color ")
-			if(i)
-				i += length("color ")
-				var/end = findtext(command, ";", i)
-
-				var/list/s = splittext(command, " ", i, end)
-
-				c = s[1]
-
-		for(var/v in variables)
-			i = findtext(command, "[v] ")
-			if(i)
-				i += length("[v] ")
-				var/end = findtext(command, ";", i)
-				var/s = splittext(command, " ", i, end)
-
-				variables[v] = text2num(s[1])
-		time += variables["time"]
-		if(isFirst)
-			isFirst = 0
-			animate(obj,
-			        alpha     = variables["alpha"],
-			        pixel_x   = variables["pixel_x"],
-			        pixel_y   = variables["pixel_y"],
-			        transform = m,
-			        color     = c,
-			        easing    = variables["easing"],
-			        time      = variables["time"],
-			        loop      = variables["loop"])
-		else
-			animate(alpha     = variables["alpha"],
-			        pixel_x   = variables["pixel_x"],
-			        pixel_y   = variables["pixel_y"],
-			        transform = m,
-			        color     = c,
-			        easing    = variables["easing"],
-			        time      = variables["time"],
-			        loop      = variables["loop"])
